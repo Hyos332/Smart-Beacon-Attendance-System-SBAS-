@@ -19,7 +19,12 @@ export default function Dashboard() {
     fetch("http://localhost:3000/api/attendance/all")
       .then((res) => res.json())
       .then((data) => {
-        setAttendances(data);
+        // Si Student viene como string, conviértelo a objeto
+        const parsed = data.map((a: any) => ({
+          ...a,
+          Student: typeof a.Student === "string" ? JSON.parse(a.Student) : a.Student,
+        }));
+        setAttendances(parsed);
         setLoading(false);
       })
       .catch(() => setLoading(false));
