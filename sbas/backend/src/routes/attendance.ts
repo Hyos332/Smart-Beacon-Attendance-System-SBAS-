@@ -1,5 +1,5 @@
 import { Router } from "express";
-import prisma from "../prisma"; // Ajusta la ruta según tu estructura
+import prisma from "../prisma"; // Ajusta la ruta según tu proyecto
 
 const router = Router();
 
@@ -29,6 +29,31 @@ router.get("/all", async (req, res) => {
     res.json(attendances);
   } catch (error) {
     res.status(500).json({ error: "Error al obtener asistencias" });
+  }
+});
+
+router.post("/seed", async (req, res) => {
+  try {
+    const student = await prisma.student.upsert({
+      where: { email: "alumno@prueba.com" },
+      update: {},
+      create: {
+        name: "Alumno Prueba",
+        email: "alumno@prueba.com",
+      },
+    });
+
+    const attendance = await prisma.attendance.create({
+      data: {
+        studentId: student.id,
+        beaconId: "beacon-123",
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    res.json({ ok: true, student, attendance });
+  } catch (error) {
+    res.status(500).json({ error: "Error al poblar datos de prueba" });
   }
 });
 

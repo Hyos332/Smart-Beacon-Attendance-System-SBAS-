@@ -1,12 +1,12 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
-import attendanceRoutes from "./routes/attendance";
+import attendanceRouter from "./routes/attendance";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/attendance", attendanceRoutes);
+app.use("/api/attendance", attendanceRouter);
 
 app.get("/", (req: Request, res: Response) => res.send("SBAS Backend OK"));
 
