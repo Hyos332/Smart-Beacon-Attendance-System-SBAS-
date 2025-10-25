@@ -34,6 +34,7 @@ class _BleScannerPageState extends State<BleScannerPage> {
   final String targetUuid = "12345678-1234-5678-1234-56789abcdef0";
   DiscoveredDevice? foundDevice;
   bool scanning = false;
+  final TextEditingController studentIdController = TextEditingController();
 
   void startScan() {
     setState(() {
@@ -79,10 +80,16 @@ class _BleScannerPageState extends State<BleScannerPage> {
   }
 
   Future<void> sendAttendance() async {
-    // Simula tus IDs reales aquí
-    const studentId = "3911567f-0700-468b-b891-b3a436578403";
+    final studentId = studentIdController.text.trim();
     const beaconId = "b70e7558-3dcc-4695-a663-70881a53ede3";
     final timestamp = DateTime.now().toUtc().toIso8601String();
+
+    if (studentId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Por favor, ingresa tu ID de estudiante")),
+      );
+      return;
+    }
 
     final url = Uri.parse("http://localhost:3000/api/attendance");
     final response = await http.post(
@@ -109,6 +116,7 @@ class _BleScannerPageState extends State<BleScannerPage> {
   @override
   void dispose() {
     flutterReactiveBle.deinitialize();
+    studentIdController.dispose();
     super.dispose();
   }
 
@@ -120,6 +128,17 @@ class _BleScannerPageState extends State<BleScannerPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              child: TextField(
+                controller: studentIdController,
+                decoration: const InputDecoration(
+                  labelText: "ID de estudiante",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
             if (foundDevice != null)
               Column(
                 children: [
