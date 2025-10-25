@@ -12,3 +12,24 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Student {
+  id          String       @id @default(uuid())
+  name        String
+  email       String       @unique
+  attendances Attendance[]
+}
+
+model Attendance {
+  id        String   @id @default(uuid())
+  studentId String
+  beaconId  String
+  timestamp DateTime
+  Student   Student  @relation(fields: [studentId], references: [id])
+}
+
+model Beacon {
+  id        String   @id @default(uuid())
+  classroom String
+  uuid      String   @unique
+}
