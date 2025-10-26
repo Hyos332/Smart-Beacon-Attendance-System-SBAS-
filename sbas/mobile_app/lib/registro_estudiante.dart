@@ -11,25 +11,30 @@ class RegistroEstudiante extends StatefulWidget {
 
 class _RegistroEstudianteState extends State<RegistroEstudiante> {
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   String? _error;
 
   Future<void> _registrar() async {
     final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
     if (name.length < 5) {
       setState(() => _error = "El nombre completo es requerido (mínimo 5 caracteres).");
+      return;
+    }
+    if (!email.contains("@")) {
+      setState(() => _error = "El email es requerido y debe ser válido.");
       return;
     }
     final response = await http.post(
       Uri.parse('http://localhost:3000/api/student/register'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'name': name}),
+      body: jsonEncode({'name': name, 'email': email}),
     );
     if (response.statusCode == 200) {
       final student = jsonDecode(response.body);
-      // Guarda el ID localmente
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('studentId', student['id'].toString());
-      // Navega a la pantalla principal (ejemplo)
+      // Puedes guardar también el nombre/email si lo necesitas
       Navigator.pushReplacementNamed(context, '/home');
     } else {
       setState(() => _error = "Error al registrar estudiante.");
@@ -47,6 +52,12 @@ class _RegistroEstudianteState extends State<RegistroEstudiante> {
             TextField(
               controller: _nameController,
               decoration: InputDecoration(labelText: 'Nombre completo'),
+            ),
+            SizedBox(height: 16),
+            TextField(
+              controller: _emailController,
+              decoration: InputDecoration(labelText: 'Email'),
+              keyboardType: TextInputType.emailAddress,
             ),
             if (_error != null) ...[
               SizedBox(height: 8),
