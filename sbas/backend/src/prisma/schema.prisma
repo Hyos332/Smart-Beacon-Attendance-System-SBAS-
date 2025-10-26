@@ -21,10 +21,12 @@ model Attendance {
   beaconId  String
   timestamp DateTime
   Student   Student  @relation(fields: [studentId], references: [id])
+  Beacon    Beacon   @relation("BeaconToAttendance", fields: [beaconId], references: [id]) // AGREGA EL NOMBRE
 }
 
 model Beacon {
-  id        String   @id @default(uuid())
-  uuid      String   @unique
+  id        String        @id @default(uuid())
+  uuid      String        @unique
   classroom String
+  attendances Attendance[] @relation("BeaconToAttendance") // MISMO NOMBRE
 }

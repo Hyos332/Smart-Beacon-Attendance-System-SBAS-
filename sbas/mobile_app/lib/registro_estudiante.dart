@@ -5,6 +5,8 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class RegistroEstudiante extends StatefulWidget {
+  const RegistroEstudiante({super.key});
+
   @override
   _RegistroEstudianteState createState() => _RegistroEstudianteState();
 }
