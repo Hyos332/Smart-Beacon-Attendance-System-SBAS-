@@ -37,8 +37,8 @@ class _HomeScreenState extends State<HomeScreen> {
       Uri.parse('http://localhost:3000/api/attendance'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'studentId': studentId,
-        'beaconUuid': beaconUuid,
+        'studentId': studentId, // <-- debe ser el UUID del estudiante
+        'beaconUuid': beaconUuid, // <-- debe ser el UUID del beacon
       }),
     );
 

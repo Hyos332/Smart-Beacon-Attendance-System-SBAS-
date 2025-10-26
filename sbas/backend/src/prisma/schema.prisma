@@ -9,7 +9,7 @@ datasource db {
 }
 
 model Student {
-  id    Int     @id @default(autoincrement())
+  id    String   @id @default(uuid()) // <-- CAMBIA Int a String y usa uuid()
   name  String
   email String  @unique
   attendances Attendance[]
@@ -17,7 +17,7 @@ model Student {
 
 model Attendance {
   id        String   @id @default(uuid())
-  studentId Int      // <--- CAMBIA String a Int
+  studentId String
   beaconId  String
   timestamp DateTime
   Student   Student  @relation(fields: [studentId], references: [id])
@@ -25,6 +25,6 @@ model Attendance {
 
 model Beacon {
   id        String   @id @default(uuid())
-  classroom String
   uuid      String   @unique
+  classroom String
 }
