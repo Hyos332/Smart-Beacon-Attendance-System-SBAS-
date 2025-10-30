@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "bleno": "^0.5.0"
-  },
-  "devDependencies": {
-    "@types/bleno": "^0.4.6"
-  }
-}

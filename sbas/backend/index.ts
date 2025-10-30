@@ -3,6 +3,7 @@ import cors from "cors";
 import sqlite3 from "sqlite3";
 import { open, Database } from "sqlite";
 import path from "path";
+import { startBeacon, isBeaconActive } from "./beacon";
 
 const app = express();
 app.use(cors());
@@ -47,6 +48,17 @@ app.post("/api/attendance/register", async (req, res) => {
 app.get("/api/attendance", async (req, res) => {
   const rows = await db.all("SELECT * FROM attendance ORDER BY timestamp DESC");
   res.json(rows);
+});
+
+// Endpoint para iniciar el beacon virtual
+app.post("/api/beacon/start", (req, res) => {
+  startBeacon();
+  res.json({ success: true, message: "Beacon virtual iniciado" });
+});
+
+// Endpoint para obtener el estado del beacon
+app.get("/api/beacon/status", (req, res) => {
+  res.json({ active: isBeaconActive() });
 });
 
 // Inicializa DB y arranca el servidor
