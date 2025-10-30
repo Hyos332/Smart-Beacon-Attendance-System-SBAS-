@@ -24,20 +24,43 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // Función para exportar a Excel
+  // Función para exportar a Excel con estilos mejorados
   const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(
-      attendance.map(a => ({
-        ID: a.id,
-        Estudiante: a.student_id,
-        "Fecha/Hora": new Date(a.timestamp).toLocaleString(),
-        Método: a.detection_method,
-      }))
-    );
+    const data = attendance.map(a => [
+      a.id,
+      a.student_id,
+      new Date(a.timestamp).toLocaleString(),
+      a.detection_method,
+    ]);
+    const wsData = [
+      ["ID", "Estudiante", "Fecha/Hora", "Método"],
+      ...data,
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    ws["!cols"] = [
+      { wch: 6 },
+      { wch: 20 },
+      { wch: 24 },
+      { wch: 10 },
+    ];
+
+    ["A1", "B1", "C1", "D1"].forEach(cell => {
+      if (ws[cell]) ws[cell].s = { font: { bold: true }, alignment: { horizontal: "center" } };
+    });
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Asistencias");
-    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    saveAs(new Blob([wbout], { type: "application/octet-stream" }), "asistencias.xlsx");
+
+    // Genera nombre de archivo con fecha actual
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const fileName = `asistencias_${yyyy}-${mm}-${dd}.xlsx`;
+
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true });
+    saveAs(new Blob([wbout], { type: "application/octet-stream" }), fileName);
   };
 
   return (
