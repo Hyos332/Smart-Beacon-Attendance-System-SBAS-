@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function AttendanceRegister({ studentName }: { studentName: string }) {
+export default function AttendanceRegister({ studentName, classDate }: { studentName: string, classDate: string }) {
   const [status, setStatus] = useState<null | string>(null);
 
   const handleRegister = async () => {
@@ -10,6 +10,7 @@ export default function AttendanceRegister({ studentName }: { studentName: strin
       body: JSON.stringify({
         student_id: studentName,
         method: "BLE",
+        class_date: classDate,
       }),
     });
     if (res.ok) {
