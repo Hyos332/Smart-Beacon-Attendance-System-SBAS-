@@ -12,6 +12,8 @@ app.use(express.json());
 const DB_PATH = path.join(__dirname, "attendance.db");
 
 let db: Database<sqlite3.Database, sqlite3.Statement>;
+let beaconActive = false;
+let activeClassDate: string | null = null;
 
 // Inicializa la base de datos y crea la tabla si no existe
 async function initDb() {
@@ -40,6 +42,7 @@ async function initDb() {
 // Endpoint para registrar asistencia
 app.post("/api/attendance/register", async (req, res) => {
   const { student_id, method, class_date } = req.body;
+  console.log("[BACKEND] Registrando asistencia:", { student_id, class_date });
   if (!student_id || !method || !class_date) return res.status(400).json({ error: "Missing data" });
 
   // Verifica duplicados por estudiante y clase
@@ -72,13 +75,16 @@ app.get("/api/attendance", async (req, res) => {
 
 // Endpoint para iniciar el beacon virtual
 app.post("/api/beacon/start", (req, res) => {
-  startBeacon();
-  res.json({ success: true, message: "Beacon virtual iniciado" });
+  const class_date = req.body?.class_date;
+  if (!class_date) return res.status(400).json({ error: "Missing class_date" });
+  beaconActive = true;
+  activeClassDate = class_date;
+  res.json({ success: true });
 });
 
 // Endpoint para obtener el estado del beacon
 app.get("/api/beacon/status", (req, res) => {
-  res.json({ active: isBeaconActive() });
+  res.json({ active: beaconActive, class_date: activeClassDate });
 });
 
 // Endpoint para registrar estudiantes
@@ -91,6 +97,15 @@ app.post("/api/students/register", async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: "Error registering student" });
   }
+});
+
+// Endpoint para resetear asistencias de una clase
+app.delete("/api/attendance/reset", async (req, res) => {
+  const class_date = req.query.class_date as string;
+  console.log("[BACKEND] Reseteando registros para la clase:", class_date);
+  if (!class_date) return res.status(400).json({ error: "Missing class_date" });
+  await db.run("DELETE FROM attendance WHERE class_date = ?", [class_date]);
+  res.json({ success: true });
 });
 
 // Inicializa DB y arranca el servidor
