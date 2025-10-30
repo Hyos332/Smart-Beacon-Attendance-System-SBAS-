@@ -28,18 +28,32 @@ async function initDb() {
       detection_method TEXT
     );
   `);
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS students (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT UNIQUE
+    );
+  `);
 }
 
 // Endpoint para registrar asistencia
 app.post("/api/attendance/register", async (req, res) => {
-  const { student_id, method, timestamp } = req.body;
-  if (!student_id || !method) {
-    return res.status(400).json({ error: "student_id and method required" });
+  const { student_id, method } = req.body;
+  if (!student_id || !method) return res.status(400).json({ error: "Missing data" });
+
+  // Verifica si ya existe un registro hoy para este estudiante
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const existing = await db.get(
+    `SELECT * FROM attendance WHERE student_id = ? AND DATE(timestamp) = ?`,
+    [student_id, today]
+  );
+  if (existing) {
+    return res.status(409).json({ error: "Ya registraste tu asistencia hoy." });
   }
-  const ts = timestamp || new Date().toISOString();
+
   await db.run(
-    "INSERT INTO attendance (student_id, timestamp, detection_method) VALUES (?, ?, ?)",
-    [student_id, ts, method]
+    "INSERT INTO attendance (student_id, detection_method) VALUES (?, ?)",
+    [student_id, method]
   );
   res.json({ success: true });
 });
@@ -59,6 +73,18 @@ app.post("/api/beacon/start", (req, res) => {
 // Endpoint para obtener el estado del beacon
 app.get("/api/beacon/status", (req, res) => {
   res.json({ active: isBeaconActive() });
+});
+
+// Endpoint para registrar estudiantes
+app.post("/api/students/register", async (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: "Name required" });
+  try {
+    await db.run("INSERT OR IGNORE INTO students (name) VALUES (?)", [name]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Error registering student" });
+  }
 });
 
 // Inicializa DB y arranca el servidor
