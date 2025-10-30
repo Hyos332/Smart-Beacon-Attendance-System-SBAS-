@@ -58,6 +58,25 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
     }
   };
 
+  // NUEVO: Función para detener la clase (detener beacon)
+  const handleStopClass = async () => {
+    setStatus(null);
+    try {
+      const res = await fetch("/api/beacon/stop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) {
+        setStatus("❌ Error al detener la clase.");
+        return;
+      }
+      setBeaconActive(false);
+      setStatus("⏹️ Clase detenida correctamente.");
+    } catch (err) {
+      setStatus("❌ Error al detener la clase.");
+    }
+  };
+
   const handleResetAttendance = async () => {
     if (!window.confirm("¿Estás segura de que quieres eliminar todos los registros de esta clase?")) return;
     console.log("[ClaseDashboard] Reseteando registros para la clase:", date);
@@ -75,17 +94,21 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
       <div className="flex justify-between items-center mb-4">
         <button onClick={onBack} className="text-indigo-600 hover:underline">&larr; Volver a inicio</button>
         <div className="flex gap-2">
-          <button
-            onClick={handleStartClass}
-            disabled={beaconActive}
-            className={`px-4 py-2 rounded font-bold shadow transition text-white ${
-              beaconActive
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-indigo-600 hover:bg-indigo-700"
-            }`}
-          >
-            {beaconActive ? "Clase en curso" : "Iniciar clase"}
-          </button>
+          {beaconActive ? (
+            <button
+              onClick={handleStopClass}
+              className="px-4 py-2 rounded font-bold shadow transition text-white bg-gray-600 hover:bg-gray-700"
+            >
+              Clase en curso (detener)
+            </button>
+          ) : (
+            <button
+              onClick={handleStartClass}
+              className="px-4 py-2 rounded font-bold shadow transition text-white bg-indigo-600 hover:bg-indigo-700"
+            >
+              Iniciar clase
+            </button>
+          )}
           <button
             onClick={handleResetAttendance}
             className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow transition"

@@ -108,6 +108,13 @@ app.delete("/api/attendance/reset", async (req, res) => {
   res.json({ success: true });
 });
 
+// Endpoint para detener el beacon virtual
+app.post("/api/beacon/stop", (req, res) => {
+  beaconActive = false;
+  activeClassDate = null;
+  res.json({ success: true });
+});
+
 // Inicializa DB y arranca el servidor
 initDb().then(() => {
   app.listen(5000, () => {
