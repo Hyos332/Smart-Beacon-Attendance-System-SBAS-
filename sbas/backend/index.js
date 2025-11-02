@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs').promises;
 const path = require('path');
+const { startBeacon, stopBeacon, isBeaconActive } = require('./beacon');
 
 const app = express();
 
@@ -13,7 +14,6 @@ app.use(cors({
 app.use(express.json());
 
 // Variables de estado
-let beaconActive = false;
 let activeClassDate = null;
 let attendanceRecords = [];
 
@@ -58,36 +58,67 @@ app.get('/health', (req, res) => {
     status: 'ok', 
     timestamp: new Date().toISOString(),
     records: attendanceRecords.length,
-    beacon: beaconActive ? 'active' : 'inactive'
+    beacon: isBeaconActive() ? 'active' : 'inactive'
   });
 });
 
 // Beacon status
 app.get('/api/beacon/status', (req, res) => {
-  res.json({ 
-    active: beaconActive, 
-    class_date: activeClassDate 
+  const { getBeaconInfo } = require('./beacon');
+  const info = getBeaconInfo();
+  
+  res.json({
+    active: info.active,
+    class_date: activeClassDate,
+    mode: info.mode,
+    uuid: info.uuid,
+    bleAvailable: info.bleAvailable
   });
 });
 
 // Start beacon
-app.post('/api/beacon/start', (req, res) => {
-  const { class_date } = req.body;
-  beaconActive = true;
-  activeClassDate = class_date || new Date().toISOString().split('T')[0];
-  console.log(`🟢 Beacon started for class: ${activeClassDate}`);
-  res.json({ 
-    message: 'Beacon started', 
-    class_date: activeClassDate 
-  });
+app.post('/api/beacon/start', async (req, res) => {
+  try {
+    const { class_date } = req.body;
+    
+    if (!class_date) {
+      return res.status(400).json({ error: 'class_date is required' });
+    }
+    
+    activeClassDate = class_date;
+    
+    // Iniciar beacon (real o simulado según BEACON_MODE)
+    startBeacon();
+    
+    console.log(`[BACKEND] Beacon iniciado para clase: ${class_date}`);
+    res.json({ 
+      message: 'Beacon iniciado correctamente',
+      active: true,
+      class_date,
+      mode: process.env.BEACON_MODE || 'simulate'
+    });
+  } catch (error) {
+    console.error('Error starting beacon:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
 });
 
 // Stop beacon
-app.post('/api/beacon/stop', (req, res) => {
-  console.log(`🔴 Beacon stopped for class: ${activeClassDate}`);
-  beaconActive = false;
-  activeClassDate = null;
-  res.json({ message: 'Beacon stopped' });
+app.post('/api/beacon/stop', async (req, res) => {
+  try {
+    stopBeacon();
+    activeClassDate = null;
+    
+    console.log('[BACKEND] Beacon detenido');
+    res.json({ 
+      message: 'Beacon detenido correctamente',
+      active: false,
+      mode: process.env.BEACON_MODE || 'simulate'
+    });
+  } catch (error) {
+    console.error('Error stopping beacon:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
 });
 
 // Get attendance
@@ -116,7 +147,7 @@ app.get('/api/attendance', (req, res) => {
 app.post('/api/attendance/register', (req, res) => {
   const { student_id, method = 'BLE' } = req.body;
   
-  if (!beaconActive) {
+  if (!isBeaconActive()) {
     return res.status(400).json({ error: 'Beacon is not active' });
   }
   
