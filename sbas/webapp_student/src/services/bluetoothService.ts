@@ -1,3 +1,40 @@
+// Extender la interfaz Navigator para incluir bluetooth
+declare global {
+  interface Navigator {
+    bluetooth?: {
+      requestDevice(options?: RequestDeviceOptions): Promise<BluetoothDevice>;
+      getAvailability(): Promise<boolean>;
+    };
+  }
+
+  interface RequestDeviceOptions {
+    filters?: BluetoothLEScanFilter[];
+    optionalServices?: BluetoothServiceUUID[];
+    acceptAllDevices?: boolean;
+  }
+
+  interface BluetoothDevice {
+    id: string;
+    name?: string;
+    gatt?: BluetoothRemoteGATT;
+  }
+
+  interface BluetoothRemoteGATT {
+    connected: boolean;
+    device: BluetoothDevice;
+    connect(): Promise<BluetoothRemoteGATT>;
+    disconnect(): void;
+  }
+
+  interface BluetoothLEScanFilter {
+    services?: BluetoothServiceUUID[];
+    name?: string;
+    namePrefix?: string;
+  }
+
+  type BluetoothServiceUUID = number | string;
+}
+
 export class BluetoothService {
   private static BEACON_UUID = "aula-101-0000-0000-000000000000";
   
@@ -17,7 +54,7 @@ export class BluetoothService {
       
       console.log("🔵 Iniciando detección de beacon...");
       
-      const device = await navigator.bluetooth.requestDevice({
+      const device = await navigator.bluetooth!.requestDevice({
         acceptAllDevices: true,
         optionalServices: [this.BEACON_UUID]
       });
@@ -40,7 +77,7 @@ export class BluetoothService {
         return false;
       }
       
-      await navigator.bluetooth.requestDevice({
+      await navigator.bluetooth!.requestDevice({
         acceptAllDevices: true
       });
       

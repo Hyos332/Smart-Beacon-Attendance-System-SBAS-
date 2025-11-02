@@ -141,7 +141,7 @@ export default function AttendanceRegister({
         clearInterval(intervalRef.current);
       }
     };
-  }, [studentName]); // Solo dependencia de studentName
+  }, [hasRegistered, onAttendanceRegistered, showError, showInfo, showSuccess, showWarning]); // Solo dependencia de studentName
 
   useEffect(() => {
     BluetoothService.isBluetoothSupported().then(setBluetoothSupported);
@@ -342,7 +342,7 @@ export default function AttendanceRegister({
       )}
       
       <button
-        onClick={handleRegister}
+        onClick={() => handleRegister('Manual')}
         disabled={!beaconActive || hasRegistered || isLoading || connectionStatus === 'disconnected'}
         className={`w-full px-4 py-3 rounded-lg transition flex items-center justify-center font-medium ${
           beaconActive && !hasRegistered && !isLoading && connectionStatus === 'connected'
