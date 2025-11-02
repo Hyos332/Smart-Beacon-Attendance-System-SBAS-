@@ -175,6 +175,90 @@ app.post("/api/beacon/stop", (req, res) => {
   res.json({ success: true });
 });
 
+// NUEVAS RUTAS PARA ELIMINAR REGISTROS
+app.delete('/api/attendance/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const db = await Database.open({
+      filename: './attendance.db',
+      driver: sqlite3.Database
+    });
+
+    const result = await db.run('DELETE FROM attendance WHERE id = ?', [id]);
+    
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Registro no encontrado' });
+    }
+
+    await db.close();
+    res.json({ message: 'Registro eliminado exitosamente' });
+  } catch (error) {
+    console.error('Error deleting record:', error);
+    res.status(500).json({ error: 'Error al eliminar registro' });
+  }
+});
+
+app.delete('/api/attendance/clear', async (req, res) => {
+  try {
+    const { date } = req.query;
+    
+    if (!date) {
+      return res.status(400).json({ error: 'Fecha requerida' });
+    }
+
+    const db = await Database.open({
+      filename: './attendance.db',
+      driver: sqlite3.Database
+    });
+
+    const result = await db.run(
+      'DELETE FROM attendance WHERE DATE(timestamp) = ?', 
+      [date]
+    );
+
+    await db.close();
+    
+    res.json({
+      message: `Se eliminaron ${result.changes} registros de la fecha ${date}`,
+      deleted_count: result.changes
+    });
+  } catch (error) {
+    console.error('Error clearing records:', error);
+    res.status(500).json({ error: 'Error al limpiar registros' });
+  }
+});
+
+app.delete('/api/attendance/delete-multiple', async (req, res) => {
+  try {
+    const { ids } = req.body;
+    
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Lista de IDs requerida' });
+    }
+
+    const db = await Database.open({
+      filename: './attendance.db',
+      driver: sqlite3.Database
+    });
+
+    const placeholders = ids.map(() => '?').join(',');
+    const result = await db.run(
+      `DELETE FROM attendance WHERE id IN (${placeholders})`, 
+      ids
+    );
+
+    await db.close();
+    
+    res.json({
+      message: `Se eliminaron ${result.changes} de ${ids.length} registros`,
+      deleted_count: result.changes
+    });
+  } catch (error) {
+    console.error('Error deleting multiple records:', error);
+    res.status(500).json({ error: 'Error al eliminar registros múltiples' });
+  }
+});
+
 // Inicializa DB y arranca el servidor
 initDb().then(() => {
   app.listen(5000, () => {
