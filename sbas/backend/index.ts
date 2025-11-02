@@ -1,267 +1,119 @@
-import express from "express";
-import cors from "cors";
-import sqlite3 from "sqlite3";
-import { open, Database } from "sqlite";
-import path from "path";
+const express = require('express');
+const cors = require('cors');
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const DB_PATH = path.join(__dirname, "attendance.db");
+const db = new sqlite3.Database('./attendance.db');
 
-let db: Database<sqlite3.Database, sqlite3.Statement>;
+// Crear tablas
+db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS attendance (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id TEXT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    detection_method TEXT,
+    class_date TEXT
+  )`);
+});
+
 let beaconActive = false;
-let activeClassDate: string | null = null;
+let activeClassDate = null;
 
-// Inicializa la base de datos y crea la tabla si no existe
-async function initDb() {
-  db = await open({
-    filename: DB_PATH,
-    driver: sqlite3.Database,
-  });
-
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS attendance (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      student_id TEXT,
-      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-      detection_method TEXT,
-      class_date TEXT
-    );
-  `);
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS students (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT UNIQUE
-    );
-  `);
-}
-
-// Endpoint para registrar asistencia
-app.post("/api/attendance/register", async (req, res) => {
-  const { student_id, method } = req.body;
+// Rutas
+app.get('/api/attendance', (req, res) => {
+  const { date, class_date } = req.query;
+  const dateToFilter = class_date || date;
   
-  console.log("[DEBUG] Request body:", req.body);
-  console.log("[DEBUG] student_id:", student_id);
-  console.log("[DEBUG] method:", method);
-  console.log("[DEBUG] activeClassDate:", activeClassDate);
-  
-  // Usar la clase activa automáticamente
-  const class_date = activeClassDate;
-  
-  if (!student_id) {
-    return res.status(400).json({ error: "Missing student_id" });
-  }
-  
-  if (!method) {
-    return res.status(400).json({ error: "Missing method" });
-  }
-  
-  if (!class_date) {
-    return res.status(400).json({ error: "No hay clase activa. La profesora debe iniciar la clase primero." });
-  }
-
-  try {
-    // Verifica duplicados por estudiante y clase
-    const existing = await db.get(
-      `SELECT * FROM attendance WHERE student_id = ? AND class_date = ?`,
-      [student_id, class_date]
-    );
-    
-    if (existing) {
-      return res.status(409).json({ error: "Ya registraste tu asistencia para esta clase." });
-    }
-
-    // Insertar nuevo registro
-    await db.run(
-      "INSERT INTO attendance (student_id, detection_method, class_date) VALUES (?, ?, ?)",
-      [student_id, method, class_date]
-    );
-    
-    console.log("[BACKEND] Asistencia registrada exitosamente:", { student_id, class_date });
-    res.json({ success: true, class_date });
-    
-  } catch (error) {
-    console.error("[BACKEND] Error al registrar asistencia:", error);
-    res.status(500).json({ error: "Error interno del servidor" });
-  }
-});
-
-// Endpoint para obtener asistencias
-app.get("/api/attendance", async (req, res) => {
-  const { class_date } = req.query;
-  let rows;
-  if (class_date) {
-    rows = await db.all("SELECT * FROM attendance WHERE class_date = ? ORDER BY timestamp DESC", [class_date]);
+  if (dateToFilter) {
+    db.all('SELECT * FROM attendance WHERE class_date = ? ORDER BY timestamp DESC', [dateToFilter], (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    });
   } else {
-    rows = await db.all("SELECT * FROM attendance ORDER BY timestamp DESC");
-  }
-  res.json(rows);
-});
-
-// Endpoint para verificar si un estudiante ya tiene asistencia registrada
-app.get("/api/attendance/check", async (req, res) => {
-  const { student_id } = req.query;
-  
-  // Usar la clase activa automáticamente
-  const class_date = activeClassDate;
-  
-  console.log("[DEBUG] Check attendance - student_id:", student_id, "class_date:", class_date);
-  
-  if (!student_id) {
-    return res.status(400).json({ error: "Missing student_id" });
-  }
-  
-  if (!class_date) {
-    return res.json({ hasAttendance: false, activeClass: null });
-  }
-  
-  try {
-    const existing = await db.get(
-      `SELECT * FROM attendance WHERE student_id = ? AND class_date = ?`,
-      [student_id, class_date]
-    );
-    
-    res.json({ hasAttendance: !!existing, activeClass: class_date });
-  } catch (error) {
-    console.error("[BACKEND] Error checking attendance:", error);
-    res.status(500).json({ error: "Error interno del servidor" });
+    db.all('SELECT * FROM attendance ORDER BY timestamp DESC', (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    });
   }
 });
 
-// Endpoint para iniciar el beacon virtual
-app.post("/api/beacon/start", (req, res) => {
-  const class_date = req.body?.class_date;
-  if (!class_date) return res.status(400).json({ error: "Missing class_date" });
-  beaconActive = true;
-  activeClassDate = class_date;
-  console.log(`[BEACON] Clase iniciada: ${class_date}`);
-  res.json({ success: true });
+app.delete('/api/attendance/:id', (req, res) => {
+  const { id } = req.params;
+  db.run('DELETE FROM attendance WHERE id = ?', [id], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    if (this.changes === 0) return res.status(404).json({ error: 'Registro no encontrado' });
+    res.json({ message: 'Registro eliminado exitosamente' });
+  });
 });
 
-// Endpoint para obtener el estado del beacon
-app.get("/api/beacon/status", (req, res) => {
-  console.log("[DEBUG] Beacon status - active:", beaconActive, "class_date:", activeClassDate);
+app.delete('/api/attendance/clear', (req, res) => {
+  const { date } = req.query;
+  if (!date) return res.status(400).json({ error: 'Fecha requerida' });
+  
+  db.run('DELETE FROM attendance WHERE class_date = ?', [date], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({
+      message: `Se eliminaron ${this.changes} registros de la fecha ${date}`,
+      deleted_count: this.changes
+    });
+  });
+});
+
+app.delete('/api/attendance/delete-multiple', (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'Lista de IDs requerida' });
+  }
+  
+  const placeholders = ids.map(() => '?').join(',');
+  db.run(`DELETE FROM attendance WHERE id IN (${placeholders})`, ids, function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({
+      message: `Se eliminaron ${this.changes} de ${ids.length} registros`,
+      deleted_count: this.changes
+    });
+  });
+});
+
+app.get('/api/beacon/status', (req, res) => {
   res.json({ active: beaconActive, class_date: activeClassDate });
 });
 
-// Endpoint para registrar estudiantes
-app.post("/api/students/register", async (req, res) => {
-  const { name } = req.body;
-  if (!name) return res.status(400).json({ error: "Name required" });
-  try {
-    await db.run("INSERT OR IGNORE INTO students (name) VALUES (?)", [name]);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: "Error registering student" });
-  }
+app.post('/api/beacon/start', (req, res) => {
+  const { class_date } = req.body;
+  beaconActive = true;
+  activeClassDate = class_date || new Date().toISOString().split('T')[0];
+  res.json({ message: 'Beacon started', class_date: activeClassDate });
 });
 
-// Endpoint para resetear asistencias de una clase
-app.delete("/api/attendance/reset", async (req, res) => {
-  const class_date = req.query.class_date as string;
-  console.log("[BACKEND] Reseteando registros para la clase:", class_date);
-  if (!class_date) return res.status(400).json({ error: "Missing class_date" });
-  await db.run("DELETE FROM attendance WHERE class_date = ?", [class_date]);
-  res.json({ success: true });
-});
-
-// Endpoint para detener el beacon virtual
-app.post("/api/beacon/stop", (req, res) => {
+app.post('/api/beacon/stop', (req, res) => {
   beaconActive = false;
   activeClassDate = null;
-  console.log("[BEACON] Clase finalizada");
-  res.json({ success: true });
+  res.json({ message: 'Beacon stopped' });
 });
 
-// NUEVAS RUTAS PARA ELIMINAR REGISTROS
-app.delete('/api/attendance/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const db = await Database.open({
-      filename: './attendance.db',
-      driver: sqlite3.Database
-    });
-
-    const result = await db.run('DELETE FROM attendance WHERE id = ?', [id]);
-    
-    if (result.changes === 0) {
-      return res.status(404).json({ error: 'Registro no encontrado' });
-    }
-
-    await db.close();
-    res.json({ message: 'Registro eliminado exitosamente' });
-  } catch (error) {
-    console.error('Error deleting record:', error);
-    res.status(500).json({ error: 'Error al eliminar registro' });
+app.post('/api/attendance/register', (req, res) => {
+  const { student_id, method = 'BLE' } = req.body;
+  
+  if (!beaconActive) {
+    return res.status(400).json({ error: 'Beacon is not active' });
   }
-});
-
-app.delete('/api/attendance/clear', async (req, res) => {
-  try {
-    const { date } = req.query;
-    
-    if (!date) {
-      return res.status(400).json({ error: 'Fecha requerida' });
+  
+  db.run(
+    'INSERT INTO attendance (student_id, detection_method, class_date) VALUES (?, ?, ?)',
+    [student_id, method, activeClassDate],
+    function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ message: 'Attendance registered successfully' });
     }
-
-    const db = await Database.open({
-      filename: './attendance.db',
-      driver: sqlite3.Database
-    });
-
-    const result = await db.run(
-      'DELETE FROM attendance WHERE DATE(timestamp) = ?', 
-      [date]
-    );
-
-    await db.close();
-    
-    res.json({
-      message: `Se eliminaron ${result.changes} registros de la fecha ${date}`,
-      deleted_count: result.changes
-    });
-  } catch (error) {
-    console.error('Error clearing records:', error);
-    res.status(500).json({ error: 'Error al limpiar registros' });
-  }
+  );
 });
 
-app.delete('/api/attendance/delete-multiple', async (req, res) => {
-  try {
-    const { ids } = req.body;
-    
-    if (!Array.isArray(ids) || ids.length === 0) {
-      return res.status(400).json({ error: 'Lista de IDs requerida' });
-    }
-
-    const db = await Database.open({
-      filename: './attendance.db',
-      driver: sqlite3.Database
-    });
-
-    const placeholders = ids.map(() => '?').join(',');
-    const result = await db.run(
-      `DELETE FROM attendance WHERE id IN (${placeholders})`, 
-      ids
-    );
-
-    await db.close();
-    
-    res.json({
-      message: `Se eliminaron ${result.changes} de ${ids.length} registros`,
-      deleted_count: result.changes
-    });
-  } catch (error) {
-    console.error('Error deleting multiple records:', error);
-    res.status(500).json({ error: 'Error al eliminar registros múltiples' });
-  }
-});
-
-// Inicializa DB y arranca el servidor
-initDb().then(() => {
-  app.listen(5000, () => {
-    console.log("Backend listening on http://localhost:5000");
-  });
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Backend running on port ${PORT}`);
 });

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 export default function HomeDashboard({
   onStartClass,
@@ -22,11 +22,40 @@ export default function HomeDashboard({
     return date.toLocaleDateString('es-ES', options);
   };
 
-  const getClassStats = (date: string) => {
-    // Simulamos estadísticas (en producción vendría del backend)
-    const randomStudents = Math.floor(Math.random() * 30) + 15;
-    return { students: randomStudents, status: 'Completada' };
+  const getClassStats = async (date: string) => {
+    try {
+      // LLAMAR AL API REAL en lugar de datos ficticios
+      const response = await fetch(`http://localhost:5000/api/attendance?class_date=${date}`);
+      if (response.ok) {
+        const data = await response.json();
+        return { 
+          students: data.length, 
+          status: 'Completada' 
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching class stats:', error);
+    }
+    
+    // Fallback si falla el API
+    return { students: 0, status: 'Error' };
   };
+
+  const [classStats, setClassStats] = useState<{[key: string]: {students: number, status: string}}>({});
+
+  useEffect(() => {
+    const loadStats = async () => {
+      const stats: {[key: string]: {students: number, status: string}} = {};
+      for (const clase of classes) {
+        stats[clase.date] = await getClassStats(clase.date);
+      }
+      setClassStats(stats);
+    };
+    
+    if (classes.length > 0) {
+      loadStats();
+    }
+  }, [classes]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
@@ -89,7 +118,7 @@ export default function HomeDashboard({
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Estudiantes Activos</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {classes.reduce((acc, clase) => acc + getClassStats(clase.date).students, 0)}
+                  {Object.values(classStats).reduce((acc, stat) => acc + stat.students, 0)}
                 </p>
               </div>
             </div>
@@ -150,7 +179,7 @@ export default function HomeDashboard({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {classes.map((clase, idx) => {
-              const stats = getClassStats(clase.date);
+              const stats = classStats[clase.date] || { students: 0, status: 'Cargando...' };
               return (
                 <div
                   key={idx}

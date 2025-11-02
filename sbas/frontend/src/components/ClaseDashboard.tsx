@@ -31,11 +31,13 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
 
   const fetchAttendance = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/attendance?date=${date}`);
+      // USAR class_date en lugar de date
+      const res = await fetch(`http://localhost:5000/api/attendance?class_date=${date}`);
       if (res.ok) {
         const data: Attendance[] = await res.json();
+        console.log(`[FRONTEND] Loaded ${data.length} records for class ${date}:`, data);
         
-        // Filtrar registros únicos por student_id para evitar duplicados
+        // Filtrar registros únicos por student_id
         const uniqueAttendanceMap = new Map<string, Attendance>();
         
         data.forEach((record: Attendance) => {
@@ -45,7 +47,6 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
           }
         });
         
-        // Convertir Map a Array y ordenar
         const uniqueAttendance = Array.from(uniqueAttendanceMap.values())
           .sort((a: Attendance, b: Attendance) => 
             new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
@@ -152,6 +153,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
 
     setIsDeleting(true);
     try {
+      // USAR class_date en lugar de date
       const res = await fetch(`http://localhost:5000/api/attendance/clear?date=${date}`, {
         method: 'DELETE'
       });
@@ -167,7 +169,6 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
       }
     } catch (error) {
       console.error('Error clearing all records:', error);
-      // Arreglar el error de TypeScript
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       alert(`❌ Error: ${errorMessage}`);
     } finally {
@@ -482,7 +483,6 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
                         ) : (
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
-                          </svg>
                         )}
                         <span>Eliminar ({selectedRecords.size})</span>
                       </button>
@@ -533,6 +533,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
               >
                 Reintentar
+             
               </button>
             </div>
           ) : filteredAttendance.length === 0 ? (
