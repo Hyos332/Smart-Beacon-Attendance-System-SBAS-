@@ -47,7 +47,7 @@
   },
   "include": [
     "**/*.ts"
-  ],
+, "beacon.js"  ],
   "exclude": [
     "node_modules",
     "dist"

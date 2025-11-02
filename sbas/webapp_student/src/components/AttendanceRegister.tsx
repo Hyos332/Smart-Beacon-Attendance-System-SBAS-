@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useToast } from "../hooks/useToast";
+import { BluetoothService } from "../services/bluetoothService";
 import { API_CONFIG, POLLING_INTERVALS, LOCAL_STORAGE_KEYS } from "../config/api";
 import { BeaconStatus, AttendanceCheckResponse, AttendanceRegisterResponse, RegisteredStudent } from "../types/attendance";
 import { handleApiError, logInfo, logError } from "../utils/errorHandler";
-import { useToast } from "../hooks/useToast";
 
 export default function AttendanceRegister({ 
   studentName, 
@@ -16,6 +17,8 @@ export default function AttendanceRegister({
   const [activeClass, setActiveClass] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'checking'>('checking');
+  const [bluetoothSupported, setBluetoothSupported] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   
   // Usar refs para evitar bucles infinitos y notificaciones repetidas
   const hasInitialized = useRef<boolean>(false);
@@ -140,7 +143,11 @@ export default function AttendanceRegister({
     };
   }, [studentName]); // Solo dependencia de studentName
 
-  const handleRegister = async (): Promise<void> => {
+  useEffect(() => {
+    BluetoothService.isBluetoothSupported().then(setBluetoothSupported);
+  }, []);
+
+  const handleRegister = async (method: string = 'Manual') => {
     if (!beaconActive) {
       showWarning("La clase aún no ha iniciado. Espera a que la profesora inicie la clase");
       return;
@@ -161,7 +168,7 @@ export default function AttendanceRegister({
     try {
       const requestData = {
         student_id: studentName,
-        method: "BLE" as const
+        method: method  // Agregar esta línea
       };
 
       logInfo("Sending attendance registration", requestData);
@@ -219,6 +226,49 @@ export default function AttendanceRegister({
       showError(`Error de conexión: ${errorMsg}`);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleBluetoothRegister = async () => {
+    if (!bluetoothSupported) {
+      showError("Tu dispositivo no soporta Bluetooth Web API");
+      return;
+    }
+    
+    if (!beaconActive) {
+      showWarning('No hay ninguna clase activa en este momento');
+      return;
+    }
+
+    setIsScanning(true);
+    try {
+      showInfo("Buscando beacon de la clase...");
+      
+      const beaconDetected = await BluetoothService.detectBeacon();
+      
+      if (beaconDetected) {
+        await handleRegister('BLE');
+        showSuccess("¡Beacon detectado! Asistencia registrada automáticamente");
+      } else {
+        showWarning("No se detectó el beacon de la clase. ¿Estás cerca del aula?");
+      }
+    } catch (error) {
+      showError("Error al escanear Bluetooth. Intenta el registro manual.");
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const handleRequestPermissions = async () => {
+    try {
+      const granted = await BluetoothService.requestBluetoothPermission();
+      if (granted) {
+        showSuccess("Permisos Bluetooth concedidos");
+      } else {
+        showWarning("Permisos Bluetooth denegados");
+      }
+    } catch (error) {
+      showError("Error solicitando permisos");
     }
   };
 
@@ -322,6 +372,46 @@ export default function AttendanceRegister({
         )}
       </button>
       
+      {/* Registro por Bluetooth */}
+      {bluetoothSupported && !hasRegistered && (
+        <button
+          onClick={handleBluetoothRegister}
+          disabled={!beaconActive || isScanning}
+          className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors flex items-center justify-center"
+        >
+          {isScanning ? (
+            <>
+              <div className="animate-spin h-5 w-5 border-2 border-white rounded-full border-t-transparent mr-2"></div>
+              Escaneando Bluetooth...
+            </>
+          ) : (
+            <>
+              🔵 Detectar Beacon Automáticamente
+            </>
+          )}
+        </button>
+      )}
+
+      {/* Solicitar permisos Bluetooth */}
+      {bluetoothSupported && !hasRegistered && (
+        <button
+          onClick={handleRequestPermissions}
+          className="w-full px-4 py-2 border border-blue-300 text-blue-600 hover:bg-blue-50 rounded-lg font-medium transition-colors text-sm"
+        >
+          🔐 Solicitar Permisos Bluetooth
+        </button>
+      )}
+
+      {/* Información sobre Bluetooth */}
+      {!bluetoothSupported && (
+        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-sm text-yellow-700">
+            ℹ️ Tu navegador no soporta detección automática por Bluetooth. 
+            Usa el registro manual.
+          </p>
+        </div>
+      )}
+
       <div className="mt-4">
         {getStatusMessage()}
       </div>

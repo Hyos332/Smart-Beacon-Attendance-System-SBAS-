@@ -340,9 +340,14 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
                   <div className={`w-2 h-2 rounded-full mr-2 ${
                     beaconActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
                   }`}></div>
-                  <span className="font-medium">
-                    {beaconActive ? 'Clase Activa' : 'Clase Inactiva'}
-                  </span>
+                  <div>
+                    <span className="font-medium block">
+                      {beaconActive ? 'Clase Activa' : 'Clase Inactiva'}
+                    </span>
+                    <span className="text-xs opacity-75">
+                      Modo: {process.env.BEACON_MODE === 'real' ? 'BLE Real' : 'Simulado'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
