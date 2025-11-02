@@ -73,6 +73,21 @@ app.get("/api/attendance", async (req, res) => {
   res.json(rows);
 });
 
+// NUEVO: Endpoint para verificar si un estudiante ya tiene asistencia registrada
+app.get("/api/attendance/check", async (req, res) => {
+  const { student_id, class_date } = req.query;
+  if (!student_id || !class_date) {
+    return res.status(400).json({ error: "Missing student_id or class_date" });
+  }
+  
+  const existing = await db.get(
+    `SELECT * FROM attendance WHERE student_id = ? AND class_date = ?`,
+    [student_id, class_date]
+  );
+  
+  res.json({ hasAttendance: !!existing });
+});
+
 // Endpoint para iniciar el beacon virtual
 app.post("/api/beacon/start", (req, res) => {
   const class_date = req.body?.class_date;
