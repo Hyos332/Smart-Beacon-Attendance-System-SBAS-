@@ -2,18 +2,56 @@ version: '3.8'
 
 services:
   backend:
-    build: ./sbas/backend
+    build:
+      context: ./sbas/backend
+      dockerfile: Dockerfile
     ports:
       - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - BEACON_MODE=simulate
     volumes:
-      - ./sbas/backend:/app
-    # El comando dependerá de si usas Node.js o Flask, ajústalo después
+      - backend-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/beacon/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  frontend:
-    build: ./sbas/frontend
-    depends_on:
-      - backend
+  frontend-teacher:
+    build:
+      context: ./sbas/frontend
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000
+      - PORT=3000
     volumes:
       - ./sbas/frontend:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+  webapp-student:
+    build: ./sbas/webapp_student
+    ports:
+      - "3001:3001"  
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000
+      - PORT=3001    
+    volumes:
+      - ./sbas/webapp_student:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+volumes:
+  backend-data:
+
+networks:
+  default:
+    driver: bridge
