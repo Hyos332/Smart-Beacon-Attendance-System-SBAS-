@@ -12,7 +12,7 @@ export default function HomeDashboard({
   onSelectClass: (date: string) => void;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50 relative">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="px-10 pt-10 pb-4">
         <h1 className="text-3xl font-extrabold text-indigo-700 mb-1 text-left">Bienvenida, Loyda Alas</h1>
@@ -23,11 +23,19 @@ export default function HomeDashboard({
 
       {/* Clases */}
       <main className="max-w-5xl mx-auto mt-6 px-4">
-        <h2 className="text-xl font-bold mb-4 text-indigo-700 text-left">Tus clases</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-indigo-700 text-left">Tus clases</h2>
+          <button
+            onClick={onStartClass}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg shadow-lg transition-transform hover:scale-105 font-semibold"
+          >
+            + Nueva Clase
+          </button>
+        </div>
         <div className="flex flex-row flex-wrap gap-6">
           {classes.length === 0 && (
             <div className="text-gray-400 text-lg">
-              Aún no has creado ninguna clase.
+              Aún no has creado ninguna clase. Haz clic en "Nueva Clase" para empezar.
             </div>
           )}
           {classes.map((clase, idx) => (
@@ -64,19 +72,6 @@ export default function HomeDashboard({
           ))}
         </div>
       </main>
-
-      {/* Botón flotante "+" con animación */}
-      <button
-        onClick={onStartClass}
-        className="fixed bottom-8 right-8 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full w-16 h-16 text-4xl flex items-center justify-center shadow-2xl transition-transform duration-200 group animate-pulse hover:scale-110"
-        title="Crear nueva clase"
-        style={{ zIndex: 50 }}
-      >
-        <span className="transition-transform duration-200 group-hover:rotate-90">+</span>
-        <span className="absolute right-20 bg-black text-white text-xs rounded px-3 py-1 opacity-0 group-hover:opacity-100 group-hover:translate-y-0 translate-y-2 transition-all duration-300 pointer-events-none">
-          Crear nueva clase
-        </span>
-      </button>
     </div>
   );
 }

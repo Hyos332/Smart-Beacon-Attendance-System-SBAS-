@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import BeaconEmitter from "./BeaconEmitter";
 
 type Attendance = {
   id: number;
@@ -119,7 +118,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
       </div>
       {status && <div className="mb-2 text-center">{status}</div>}
       <h1 className="text-2xl font-extrabold mb-4 text-indigo-700">Bienvenida a tu clase de {date}</h1>
-      <BeaconEmitter />
+      
       <div className="overflow-x-auto rounded-lg shadow mt-6">
         <table className="min-w-full bg-white rounded-lg">
           <thead>

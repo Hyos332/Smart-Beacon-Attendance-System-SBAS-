@@ -3,7 +3,6 @@ import cors from "cors";
 import sqlite3 from "sqlite3";
 import { open, Database } from "sqlite";
 import path from "path";
-import { startBeacon, isBeaconActive } from "./beacon";
 
 const app = express();
 app.use(cors());
@@ -41,24 +40,52 @@ async function initDb() {
 
 // Endpoint para registrar asistencia
 app.post("/api/attendance/register", async (req, res) => {
-  const { student_id, method, class_date } = req.body;
-  console.log("[BACKEND] Registrando asistencia:", { student_id, class_date });
-  if (!student_id || !method || !class_date) return res.status(400).json({ error: "Missing data" });
-
-  // Verifica duplicados por estudiante y clase
-  const existing = await db.get(
-    `SELECT * FROM attendance WHERE student_id = ? AND class_date = ?`,
-    [student_id, class_date]
-  );
-  if (existing) {
-    return res.status(409).json({ error: "Ya registraste tu asistencia para esta clase." });
+  const { student_id, method } = req.body;
+  
+  console.log("[DEBUG] Request body:", req.body);
+  console.log("[DEBUG] student_id:", student_id);
+  console.log("[DEBUG] method:", method);
+  console.log("[DEBUG] activeClassDate:", activeClassDate);
+  
+  // Usar la clase activa automáticamente
+  const class_date = activeClassDate;
+  
+  if (!student_id) {
+    return res.status(400).json({ error: "Missing student_id" });
+  }
+  
+  if (!method) {
+    return res.status(400).json({ error: "Missing method" });
+  }
+  
+  if (!class_date) {
+    return res.status(400).json({ error: "No hay clase activa. La profesora debe iniciar la clase primero." });
   }
 
-  await db.run(
-    "INSERT INTO attendance (student_id, detection_method, class_date) VALUES (?, ?, ?)",
-    [student_id, method, class_date]
-  );
-  res.json({ success: true });
+  try {
+    // Verifica duplicados por estudiante y clase
+    const existing = await db.get(
+      `SELECT * FROM attendance WHERE student_id = ? AND class_date = ?`,
+      [student_id, class_date]
+    );
+    
+    if (existing) {
+      return res.status(409).json({ error: "Ya registraste tu asistencia para esta clase." });
+    }
+
+    // Insertar nuevo registro
+    await db.run(
+      "INSERT INTO attendance (student_id, detection_method, class_date) VALUES (?, ?, ?)",
+      [student_id, method, class_date]
+    );
+    
+    console.log("[BACKEND] Asistencia registrada exitosamente:", { student_id, class_date });
+    res.json({ success: true, class_date });
+    
+  } catch (error) {
+    console.error("[BACKEND] Error al registrar asistencia:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
 });
 
 // Endpoint para obtener asistencias
@@ -73,19 +100,34 @@ app.get("/api/attendance", async (req, res) => {
   res.json(rows);
 });
 
-// NUEVO: Endpoint para verificar si un estudiante ya tiene asistencia registrada
+// Endpoint para verificar si un estudiante ya tiene asistencia registrada
 app.get("/api/attendance/check", async (req, res) => {
-  const { student_id, class_date } = req.query;
-  if (!student_id || !class_date) {
-    return res.status(400).json({ error: "Missing student_id or class_date" });
+  const { student_id } = req.query;
+  
+  // Usar la clase activa automáticamente
+  const class_date = activeClassDate;
+  
+  console.log("[DEBUG] Check attendance - student_id:", student_id, "class_date:", class_date);
+  
+  if (!student_id) {
+    return res.status(400).json({ error: "Missing student_id" });
   }
   
-  const existing = await db.get(
-    `SELECT * FROM attendance WHERE student_id = ? AND class_date = ?`,
-    [student_id, class_date]
-  );
+  if (!class_date) {
+    return res.json({ hasAttendance: false, activeClass: null });
+  }
   
-  res.json({ hasAttendance: !!existing });
+  try {
+    const existing = await db.get(
+      `SELECT * FROM attendance WHERE student_id = ? AND class_date = ?`,
+      [student_id, class_date]
+    );
+    
+    res.json({ hasAttendance: !!existing, activeClass: class_date });
+  } catch (error) {
+    console.error("[BACKEND] Error checking attendance:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
 });
 
 // Endpoint para iniciar el beacon virtual
@@ -94,11 +136,13 @@ app.post("/api/beacon/start", (req, res) => {
   if (!class_date) return res.status(400).json({ error: "Missing class_date" });
   beaconActive = true;
   activeClassDate = class_date;
+  console.log(`[BEACON] Clase iniciada: ${class_date}`);
   res.json({ success: true });
 });
 
 // Endpoint para obtener el estado del beacon
 app.get("/api/beacon/status", (req, res) => {
+  console.log("[DEBUG] Beacon status - active:", beaconActive, "class_date:", activeClassDate);
   res.json({ active: beaconActive, class_date: activeClassDate });
 });
 
@@ -127,6 +171,7 @@ app.delete("/api/attendance/reset", async (req, res) => {
 app.post("/api/beacon/stop", (req, res) => {
   beaconActive = false;
   activeClassDate = null;
+  console.log("[BEACON] Clase finalizada");
   res.json({ success: true });
 });
 
