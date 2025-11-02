@@ -1,0 +1,103 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: |
+          sbas/backend/package-lock.json
+          sbas/frontend/package-lock.json
+          sbas/webapp_student/package-lock.json
+    
+    - name: Install Backend Dependencies
+      run: |
+        cd sbas/backend
+        npm ci
+    
+    - name: Install Frontend Dependencies
+      run: |
+        cd sbas/frontend
+        npm ci
+    
+    - name: Install Student App Dependencies
+      run: |
+        cd sbas/webapp_student
+        npm ci
+    
+    - name: Run Backend Tests
+      run: |
+        cd sbas/backend
+        npm test
+    
+    - name: Run Frontend Tests
+      run: |
+        cd sbas/frontend
+        npm test -- --coverage --watchAll=false
+    
+    - name: Run Student App Tests
+      run: |
+        cd sbas/webapp_student
+        npm test -- --coverage --watchAll=false
+
+  deploy-backend:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to Railway
+      uses: railwayapp/railway-deploy-action@v0.2.0
+      with:
+        railway_token: ${{ secrets.RAILWAY_TOKEN }}
+        railway_service: sbas-backend
+        railway_environment: production
+
+  deploy-frontend:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy Teacher Frontend to Vercel
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+        working-directory: sbas/frontend
+        vercel-args: '--prod'
+
+  deploy-student-app:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy Student App to Vercel
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_STUDENT }}
+        working-directory: sbas/webapp_student
+        vercel-args: '--prod'
