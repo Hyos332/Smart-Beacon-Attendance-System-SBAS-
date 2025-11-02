@@ -298,7 +298,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      {/* Header - igual que antes */}
+      {/* Header */}
       <header className="bg-white shadow-sm border-b border-indigo-100">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
@@ -373,7 +373,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
         </div>
       </header>
 
-      {/* Estadísticas - igual que antes pero agregando info de duplicados */}
+      {/* Estadísticas */}
       <section className="max-w-7xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -440,7 +440,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
         </div>
       </section>
 
-      {/* Lista de Asistencia MEJORADA */}
+      {/* Lista de Asistencia */}
       <main className="max-w-7xl mx-auto px-6 pb-12">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
@@ -483,6 +483,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
                         ) : (
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
+                          </svg>
                         )}
                         <span>Eliminar ({selectedRecords.size})</span>
                       </button>
