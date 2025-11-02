@@ -533,7 +533,6 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
               >
                 Reintentar
-             
               </button>
             </div>
           ) : filteredAttendance.length === 0 ? (
