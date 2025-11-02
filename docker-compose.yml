@@ -1,37 +1,19 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: sbauser
-      POSTGRES_PASSWORD: sbapass
-      POSTGRES_DB: sbasdb
-    ports:
-      - "5433:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
-
   backend:
     build: ./sbas/backend
-    depends_on:
-      - db
-    environment:
-      DATABASE_URL: postgres://sbauser:sbapass@db:5432/sbasdb
     ports:
-      - "3000:3000"
+      - "5000:5000"
     volumes:
       - ./sbas/backend:/app
-    command: sh -c "npx prisma generate && npx prisma migrate deploy && npx ts-node-dev src/index.ts"
+    # El comando dependerá de si usas Node.js o Flask, ajústalo después
 
   frontend:
     build: ./sbas/frontend
     depends_on:
       - backend
     ports:
-      - "3001:3000"
+      - "3000:3000"
     volumes:
       - ./sbas/frontend:/app
-
-volumes:
-  db_data:

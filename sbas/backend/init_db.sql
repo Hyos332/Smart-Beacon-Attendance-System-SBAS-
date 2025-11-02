@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS attendance (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id TEXT,
+  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+  detection_method TEXT
+);
