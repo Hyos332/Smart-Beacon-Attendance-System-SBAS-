@@ -1,0 +1,21 @@
+# sbas/backend/Dockerfile.prod
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Instalar curl para health checks
+RUN apk add --no-cache curl
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY . .
+
+# Crear directorio para datos persistentes
+RUN mkdir -p /app/data
+
+EXPOSE 5000
+
+USER node
+
+CMD ["node", "index.js"]
