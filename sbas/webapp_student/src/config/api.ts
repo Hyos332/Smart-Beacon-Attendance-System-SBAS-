@@ -1,5 +1,8 @@
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:5000',
+  BASE_URL: process.env.REACT_APP_API_URL || 
+    (process.env.NODE_ENV === 'production' 
+      ? 'https://diligent-analysis-production-44fb.up.railway.app'
+      : 'http://localhost:5000'),
   ENDPOINTS: {
     ATTENDANCE: {
       REGISTER: '/api/attendance/register',
@@ -18,7 +21,7 @@ export const API_CONFIG = {
 };
 
 export const POLLING_INTERVALS = {
-  BEACON_STATUS: 3000,
+  BEACON_STATUS: 5000,  
   ATTENDANCE_LIST: 5000
 };
 

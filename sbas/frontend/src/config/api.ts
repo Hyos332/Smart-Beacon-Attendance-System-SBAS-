@@ -1,6 +1,6 @@
 export const API_CONFIG = {
   BASE_URL: process.env.NODE_ENV === 'production' 
-    ? 'https://truthful-balance-production.up.railway.app' 
+    ? 'https://diligent-analysis-production-44fb.up.railway.app'  
     : 'http://localhost:5000',
   ENDPOINTS: {
     ATTENDANCE: {
@@ -20,6 +20,6 @@ export const API_CONFIG = {
 };
 
 export const POLLING_INTERVALS = {
-  BEACON_STATUS: 2000,
-  ATTENDANCE_LIST: 3000
+  BEACON_STATUS: 5000,  
+  ATTENDANCE_LIST: 5000  
 };
