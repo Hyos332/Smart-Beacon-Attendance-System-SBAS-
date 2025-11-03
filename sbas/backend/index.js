@@ -8,12 +8,20 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: [
-    'http://localhost:3000', 
-    'http://localhost:3001',
-    'https://frontend-h2cfttp28-hyos332s-projects.vercel.app',
-    'https://webapp-student-a917d4tbh-hyos332s-projects.vercel.app'
-  ],
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (ej: mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Patrones permitidos
+    const allowedPatterns = [
+      /^http:\/\/localhost:\d+$/,
+      /^https:\/\/frontend-[a-z0-9]+-hyos332s-projects\.vercel\.app$/,
+      /^https:\/\/webapp-student-[a-z0-9]+-hyos332s-projects\.vercel\.app$/
+    ];
+    
+    const isAllowed = allowedPatterns.some(pattern => pattern.test(origin));
+    callback(null, isAllowed);
+  },
   credentials: true
 }));
 app.use(express.json());
