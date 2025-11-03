@@ -8,7 +8,12 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: [
+    'http://localhost:3000', 
+    'http://localhost:3001',
+    'https://frontend-h2cfttp28-hyos332s-projects.vercel.app',
+    'https://webapp-student-a917d4tbh-hyos332s-projects.vercel.app'
+  ],
   credentials: true
 }));
 app.use(express.json());

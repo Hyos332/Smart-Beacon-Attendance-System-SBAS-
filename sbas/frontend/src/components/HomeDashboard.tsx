@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { API_CONFIG } from "../config/api";
 
 export default function HomeDashboard({
   onStartClass,
@@ -24,8 +25,9 @@ export default function HomeDashboard({
 
   const getClassStats = async (date: string) => {
     try {
-      // LLAMAR AL API REAL en lugar de datos ficticios
-      const response = await fetch(`http://localhost:5000/api/attendance?class_date=${date}`);
+      // ✅ USAR configuración de API
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ATTENDANCE.LIST}?class_date=${date}`;
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         return { 

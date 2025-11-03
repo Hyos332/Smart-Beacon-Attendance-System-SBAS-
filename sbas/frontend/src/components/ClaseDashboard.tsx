@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { API_CONFIG } from "../config/api";
 
 type Attendance = {
   id: number;
@@ -19,8 +20,9 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
 
   const fetchAttendance = useCallback(async () => {
     try {
-      // USAR class_date en lugar de date
-      const res = await fetch(`http://localhost:5000/api/attendance?class_date=${date}`);
+      // ✅ USAR configuración de API
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ATTENDANCE.LIST}?class_date=${date}`;
+      const res = await fetch(url);
       if (res.ok) {
         const data: Attendance[] = await res.json();
         console.log(`[FRONTEND] Loaded ${data.length} records for class ${date}:`, data);
@@ -67,7 +69,8 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
 
   const fetchBeaconStatus = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/beacon/status');
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.BEACON.STATUS}`;
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setBeaconActive(data.active);
@@ -80,7 +83,8 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
 
   const handleStartClass = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/beacon/start', {
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.BEACON.START}`;
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ class_date: date }),
@@ -96,7 +100,8 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
 
   const handleStopClass = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/beacon/stop', {
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.BEACON.STOP}`;
+      const res = await fetch(url, {
         method: 'POST',
       });
       if (res.ok) {
@@ -119,7 +124,8 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
     setIsDeleting(true);
     try {
       const ids = Array.from(selectedRecords);
-      const res = await fetch('http://localhost:5000/api/attendance/delete-multiple', {
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ATTENDANCE.DELETE_MULTIPLE}`;
+      const res = await fetch(url, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids })
@@ -153,8 +159,8 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
 
     setIsDeleting(true);
     try {
-      // USAR class_date en lugar de date
-      const res = await fetch(`http://localhost:5000/api/attendance/clear?date=${date}`, {
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ATTENDANCE.CLEAR}?date=${date}`;
+      const res = await fetch(url, {
         method: 'DELETE'
       });
       
@@ -183,7 +189,8 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
 
     setIsDeleting(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/attendance/${id}`, {
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ATTENDANCE.DELETE}/${id}`;
+      const res = await fetch(url, {
         method: 'DELETE'
       });
       
