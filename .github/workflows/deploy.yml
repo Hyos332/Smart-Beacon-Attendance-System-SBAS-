@@ -61,12 +61,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Deploy to Railway
-      uses: railwayapp/railway-deploy-action@v0.2.0
-      with:
-        railway_token: ${{ secrets.RAILWAY_TOKEN }}
-        railway_service: sbas-backend
-        railway_environment: production
+    - name: Notify Backend Deployment
+      run: |
+        echo "✅ Backend tests passed!"
+        echo "🚀 Railway will auto-deploy from connected GitHub repository"
+        echo "🔗 Backend URL: https://truthful-balance-production.up.railway.app"
+        echo "💡 Railway deployment is handled automatically via GitHub integration"
       continue-on-error: true
 
   deploy-frontend:
