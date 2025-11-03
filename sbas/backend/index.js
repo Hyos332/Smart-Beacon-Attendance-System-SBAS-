@@ -12,14 +12,37 @@ app.use(cors({
     // Permitir requests sin origin (ej: mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
     
-    // Patrones permitidos
-    const allowedPatterns = [
-      /^http:\/\/localhost:\d+$/,
-      /^https:\/\/frontend-[a-z0-9]+-hyos332s-projects\.vercel\.app$/,
-      /^https:\/\/webapp-student-[a-z0-9]+-hyos332s-projects\.vercel\.app$/
+    // Dominios permitidos - URLs exactas de tus deployments
+    const allowedOrigins = [
+      // Localhost para desarrollo
+      'http://localhost:3000',
+      'http://localhost:3001',
+      // Tus dominios exactos de Vercel
+      'https://sbas-teacher-clean-5zx7fsti3-hyos332s-projects.vercel.app',
+      'https://sbas-teacher-clean.vercel.app',
+      'https://sbas-student-clean-nh5fn7ryy-hyos332s-projects.vercel.app',
+      'https://sbas-student-clean.vercel.app',
+      // Patrones wildcard para futuros deployments
+      'https://sbas-teacher-clean-hyos332s-projects.vercel.app',
+      'https://sbas-student-clean-hyos332s-projects.vercel.app'
     ];
     
-    const isAllowed = allowedPatterns.some(pattern => pattern.test(origin));
+    // Patrones adicionales para flexibility
+    const allowedPatterns = [
+      /^http:\/\/localhost:\d+$/,
+      /^https:\/\/sbas-teacher-clean.*\.vercel\.app$/,
+      /^https:\/\/sbas-student-clean.*\.vercel\.app$/,
+      /^https:\/\/.*-hyos332s-projects\.vercel\.app$/
+    ];
+    
+    console.log(`🌐 CORS Check - Origin: ${origin}`);
+    
+    const isDirectMatch = allowedOrigins.includes(origin);
+    const isPatternMatch = allowedPatterns.some(pattern => pattern.test(origin));
+    const isAllowed = isDirectMatch || isPatternMatch;
+    
+    console.log(`🌐 CORS Result: ${isAllowed ? 'ALLOWED' : 'BLOCKED'} (Direct: ${isDirectMatch}, Pattern: ${isPatternMatch})`);
+    
     callback(null, isAllowed);
   },
   credentials: true
