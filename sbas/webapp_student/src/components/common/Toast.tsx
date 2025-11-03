@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -17,6 +17,11 @@ export const Toast: React.FC<ToastProps> = ({
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
+  const handleClose = useCallback(() => {
+    setIsVisible(false);
+    setTimeout(onClose, 300); // Esperar a que termine la animación
+  }, [onClose]);
+
   useEffect(() => {
     // Mostrar con animación
     setTimeout(() => setIsVisible(true), 100);
@@ -27,12 +32,7 @@ export const Toast: React.FC<ToastProps> = ({
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [duration]);
-
-  const handleClose = () => {
-    setIsVisible(false);
-    setTimeout(onClose, 300); // Esperar a que termine la animación
-  };
+  }, [duration, handleClose]);
 
   const getToastStyles = (): string => {
     const baseStyles = "max-w-sm w-full p-4 rounded-lg shadow-lg transform transition-all duration-300 z-50";

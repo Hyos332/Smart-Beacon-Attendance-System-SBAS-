@@ -63,7 +63,7 @@ function AppContent() {
         showError("Error al restaurar la sesión. Por favor inicia sesión nuevamente.");
       }
     }
-  }, []); // SOLO se ejecuta una vez al montar el componente
+  }, [hasShownWelcome, showError, showInfo, showWarning]); // SOLO se ejecuta una vez al montar el componente
 
   const handleLogin = (student: string): void => {
     if (!student.trim()) {

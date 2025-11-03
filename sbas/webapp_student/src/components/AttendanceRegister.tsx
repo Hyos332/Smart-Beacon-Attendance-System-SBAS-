@@ -141,7 +141,7 @@ export default function AttendanceRegister({
         clearInterval(intervalRef.current);
       }
     };
-  }, [hasRegistered, onAttendanceRegistered, showError, showInfo, showSuccess, showWarning]); // Solo dependencia de studentName
+  }, [studentName, hasRegistered, onAttendanceRegistered, showError, showInfo, showSuccess, showWarning]); // Solo dependencia de studentName
 
   useEffect(() => {
     BluetoothService.isBluetoothSupported().then(setBluetoothSupported);

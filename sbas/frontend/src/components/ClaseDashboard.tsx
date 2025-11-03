@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 type Attendance = {
   id: number;
@@ -10,26 +10,14 @@ type Attendance = {
 export default function ClaseDashboard({ date, onBack }: { date: string, onBack: () => void }) {
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [beaconActive, setBeaconActive] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
+  const [, setStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRecords, setSelectedRecords] = useState<Set<number>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchAttendance();
-    const interval = setInterval(fetchAttendance, 3000);
-    return () => clearInterval(interval);
-  }, [date]);
-
-  useEffect(() => {
-    fetchBeaconStatus();
-    const interval = setInterval(fetchBeaconStatus, 2000);
-    return () => clearInterval(interval);
-  }, [date]);
-
-  const fetchAttendance = async () => {
+  const fetchAttendance = useCallback(async () => {
     try {
       // USAR class_date en lugar de date
       const res = await fetch(`http://localhost:5000/api/attendance?class_date=${date}`);
@@ -63,7 +51,19 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [date]);
+
+  useEffect(() => {
+    fetchAttendance();
+    const interval = setInterval(fetchAttendance, 3000);
+    return () => clearInterval(interval);
+  }, [date, fetchAttendance]);
+
+  useEffect(() => {
+    fetchBeaconStatus();
+    const interval = setInterval(fetchBeaconStatus, 2000);
+    return () => clearInterval(interval);
+  }, [date]);
 
   const fetchBeaconStatus = async () => {
     try {

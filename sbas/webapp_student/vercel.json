@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "src/index.tsx",
+      "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
         "buildCommand": "npm run build",
@@ -23,11 +23,5 @@
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ],
-  "env": {
-    "REACT_APP_API_URL": "@react_app_api_url",
-    "REACT_APP_ENV": "production",
-    "REACT_APP_BEACON_ID": "@react_app_beacon_id",
-    "REACT_APP_SERVICE_UUID": "@react_app_service_uuid"
-  }
+  ]
 }
