@@ -1,139 +1,144 @@
-# Smart Beacon Attendance System (SBAS)
+# 🎓 Smart Beacon Attendance System (SBAS)
 
-## Descripción del Proyecto
+[![🚀 Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-Available-brightgreen)](https://frontend-h2cfttp28-hyos332s-projects.vercel.app)
+[![Student App](https://img.shields.io/badge/📱%20Student%20App-Live-blue)](https://webapp-student-a917d4tbh-hyos332s-projects.vercel.app)
+[![API Backend](https://img.shields.io/badge/🔌%20API%20Backend-Live-orange)](https://truthful-balance-production.up.railway.app)
 
-**Smart Beacon Attendance System (SBAS)** es una solución integral para el control automatizado de asistencias en entornos educativos, utilizando tecnología moderna de desarrollo web y arquitectura de microservicios con Docker.
+## 🌟 **¡SISTEMA EN PRODUCCIÓN!**
 
-El sistema está diseñado para **automatizar completamente el proceso de registro de asistencia**, eliminando el fraude, reduciendo el tiempo administrativo y proporcionando herramientas avanzadas de análisis y gestión para profesores.
+**Smart Beacon Attendance System (SBAS)** es una solución integral **COMPLETAMENTE DESPLEGADA** para el control automatizado de asistencias en entornos educativos. 
 
----
-
-## Arquitectura del Sistema
-
-### Componentes Principales
-
-**SBAS** consta de tres aplicaciones principales orquestadas con Docker:
-
-1. **Backend API** (Node.js + Express)
-   - API REST para gestión de datos
-   - Simulación de beacon virtual
-   - Base de datos con persistencia en JSON
-   - Sistema de logging estructurado
-
-2. **Teacher Dashboard** (React + TypeScript)
-   - Interface web para profesores
-   - Gestión de clases y control de beacon
-   - Visualización en tiempo real de asistencias
-   - Exportación de datos y análisis estadístico
-
-3. **Student Web App** (React + TypeScript)
-   - Aplicación web para estudiantes
-   - Registro automático de asistencia
-   - Sistema de notificaciones avanzado
-   - Interfaz responsive y PWA-ready
+✅ **Arquitectura moderna:** React + TypeScript + Node.js  
+✅ **Desplegado globalmente:** Vercel + Railway  
+✅ **100% funcional:** Sistema completo en producción  
+✅ **Tiempo real:** Actualizaciones instantáneas  
+✅ **Responsive:** Funciona en cualquier dispositivo
 
 ---
 
-## Flujo de Funcionamiento
+## 🌐 **APLICACIONES EN VIVO**
 
-### Para el Profesor
-1. Accede al **Teacher Dashboard** en `http://localhost:3000`
-2. Crea una nueva clase para la fecha actual
-3. Inicia el beacon virtual para habilitar el registro
-4. Monitorea en tiempo real las asistencias registradas
-5. Puede buscar, filtrar, eliminar registros específicos
-6. Exporta los datos a CSV para análisis posterior
-7. Finaliza la clase desactivando el beacon
-
-### Para el Estudiante
-1. Accede a la **Student Web App** en `http://localhost:3001`
-2. Inicia sesión con su nombre (validación automática)
-3. El sistema detecta automáticamente si hay una clase activa
-4. Registra su asistencia con un solo clic
-5. Recibe confirmaciones y notificaciones del estado
-6. Su sesión queda bloqueada por seguridad tras registrar asistencia
+| 📱 **Aplicación** | 🔗 **URL en Producción** | 📋 **Descripción** |
+|------------------|--------------------------|-------------------|
+| **👩‍🏫 Teacher Dashboard** | [frontend-h2cfttp28-hyos332s-projects.vercel.app](https://frontend-h2cfttp28-hyos332s-projects.vercel.app) | Dashboard para profesores |
+| **🎓 Student App** | [webapp-student-a917d4tbh-hyos332s-projects.vercel.app](https://webapp-student-a917d4tbh-hyos332s-projects.vercel.app) | App para registro de estudiantes |
+| **🔌 Backend API** | [truthful-balance-production.up.railway.app](https://truthful-balance-production.up.railway.app) | API REST en Railway |
 
 ---
 
-## Stack Tecnológico
+## 🏗️ **Arquitectura del Sistema**
 
-### Backend
-- **Runtime:** Node.js 18
-- **Framework:** Express.js
-- **Almacenamiento:** Sistema de archivos JSON
-- **CORS:** Configurado para desarrollo multi-origen
-- **Health Checks:** Endpoint de monitoreo integrado
+### 🚀 **Stack Tecnológico**
 
-### Frontend (Teacher Dashboard)
-- **Framework:** React 19 + TypeScript
-- **Styling:** Tailwind CSS con diseño responsive
-- **Estado:** React Hooks + Local Storage
-- **Exportación:** Biblioteca XLSX para Excel/CSV
-- **Hot Reload:** Desarrollo en tiempo real
+1. **🖥️ Backend API** (Railway)
+   - **Node.js + Express** - API REST escalable
+   - **JSON Database** - Persistencia de datos
+   - **CORS habilitado** - Comunicación cross-origin
+   - **Health monitoring** - Monitoreo automático
 
-### Frontend (Student App)
-- **Framework:** React 19 + TypeScript
-- **UI/UX:** Sistema de notificaciones Toast avanzado
-- **Validación:** Validación de formularios en tiempo real
-- **Seguridad:** Bloqueo de sesión post-registro
-- **PWA:** Progressive Web App capabilities
+2. **👩‍🏫 Teacher Dashboard** (Vercel)
+   - **React 19 + TypeScript** - Interface moderna
+   - **Tailwind CSS** - Diseño responsive
+   - **Real-time updates** - Actualizaciones automáticas
+   - **Export CSV** - Análisis de datos
 
-### DevOps
+3. **🎓 Student App** (Vercel)
+   - **React 19 + TypeScript + PWA** - App instalable
+   - **Web Bluetooth API** - Detección de beacons
+   - **Responsive design** - Compatible con móviles
+   - **Toast notifications** - Feedback instantáneo
+
+---
+
+## 🎯 **¡PRUEBA EL SISTEMA AHORA!**
+
+### 👩‍🏫 **Para Profesores:**
+1. **Accede:** [Teacher Dashboard](https://frontend-h2cfttp28-hyos332s-projects.vercel.app)
+2. **Crea clase:** Selecciona la fecha actual
+3. **Inicia beacon:** Habilita el registro virtual
+4. **Monitorea:** Ve asistencias en tiempo real
+5. **Gestiona:** Busca, filtra, elimina registros
+6. **Exporta:** Descarga datos en CSV
+7. **Finaliza:** Detén el beacon al terminar
+
+### 🎓 **Para Estudiantes:**
+1. **Accede:** [Student App](https://webapp-student-a917d4tbh-hyos332s-projects.vercel.app)
+2. **Regístrate:** Ingresa tu nombre completo
+3. **Registra asistencia:** Detección automática + un clic
+4. **Confirmación:** Notificaciones en tiempo real
+5. **Seguridad:** Sesión bloqueada tras registro
+
+---
+
+## 🛠️ **Tecnologías y Despliegue**
+
+### 🚀 **Producción (LIVE)**
+- **Frontend:** Vercel - CDN global con HTTPS automático
+- **Backend:** Railway - Auto-scaling con health monitoring  
+- **Database:** JSON persistente con backup automático
+- **DNS:** URLs personalizadas con SSL
+- **CI/CD:** Deploy automático desde GitHub
+
+### 💻 **Desarrollo Local**
 - **Containerización:** Docker + Docker Compose
-- **Desarrollo:** Hot reload en todos los servicios
+- **Hot Reload:** Actualizaciones automáticas
+- **Environment:** Variables de entorno separadas
+- **Testing:** Jest + React Testing Library
+
+### 🔧 **Stack Técnico**
+
+| Capa | Tecnología | Descripción |
+|------|------------|-------------|
+| **Frontend** | React 19 + TypeScript | Apps modernas con tipado fuerte |
+| **Styling** | Tailwind CSS | Diseño responsive y consistente |  
+| **Backend** | Node.js + Express | API REST escalable |
+| **Database** | JSON Files | Persistencia simple y confiable |
+| **Deploy** | Vercel + Railway | Plataformas cloud modernas |
 - **Networking:** Red privada de Docker con proxy
 - **Persistencia:** Volúmenes Docker para datos
 - **Health Monitoring:** Health checks automáticos
 
 ---
 
-## Instalación y Configuración
+## 🚀 **Desarrollo Local**
 
-### Prerrequisitos
-- Docker y Docker Compose instalados
-- Puertos 3000, 3001 y 5000 disponibles
-- 4GB RAM recomendado
-
-### Instalación Rápida
-
-1. **Clonar el repositorio**
-   ```bash
-   git clone <repository-url>
-   cd Smart-Beacon-Attendance-System-SBAS-
-   ```
-
-2. **Levantar todos los servicios**
-   ```bash
-   docker-compose up --build
-   ```
-
-3. **Verificar servicios activos**
-   ```bash
-   docker-compose ps
-   ```
-
-4. **Acceder a las aplicaciones**
-   - Teacher Dashboard: http://localhost:3000
-   - Student Web App: http://localhost:3001
-   - Backend API: http://localhost:5000
-   - Health Check: http://localhost:5000/health
-
-### Comandos Útiles
+### ⚡ **Setup Rápido**
 
 ```bash
-# Levantar en segundo plano
-docker-compose up --build -d
+# 1. Clonar el proyecto
+git clone https://github.com/Hyos332/Smart-Beacon-Attendance-System-SBAS-.git
+cd Smart-Beacon-Attendance-System-SBAS-
 
-# Ver logs en tiempo real
+# 2. Configurar entorno
+./scripts/setup-dev.sh
+
+# 3. Levantar servicios
+docker-compose up --build
+```
+
+### 📋 **URLs de Desarrollo**
+- **Teacher Dashboard:** http://localhost:3000
+- **Student App:** http://localhost:3001  
+- **Backend API:** http://localhost:5000
+- **Health Check:** http://localhost:5000/health
+
+### 🛠️ **Comandos Útiles**
+
+```bash
+# Desarrollo completo
+docker-compose up --build
+
+# Solo backend
+docker-compose up backend
+
+# Ver logs en tiempo real  
 docker-compose logs -f
 
-# Ver logs de un servicio específico
-docker-compose logs -f backend
-docker-compose logs -f webapp-student
+# Pruebas locales
+./scripts/test-local.sh
 
-# Reconstruir un servicio específico
-docker-compose build backend
-docker-compose up -d backend
+# Deploy a producción
+./scripts/deploy.sh
 
 # Detener todos los servicios
 docker-compose down
@@ -145,51 +150,42 @@ docker-compose up --build
 
 ---
 
-## Estructura del Proyecto
+## 📁 **Estructura del Proyecto**
 
 ```
-/
-├── docker-compose.yml           # Orquestación de servicios
-├── README.md                    # Documentación principal
-├── .vscode/                     # Configuración VS Code
-│   └── settings.json
-└── sbas/                        # Código fuente principal
-    ├── backend/                 # API Backend
-    │   ├── Dockerfile
-    │   ├── package.json
-    │   ├── index.js             # Servidor principal
-    │   ├── beacon.ts            # Lógica de beacon
-    │   └── data/                # Persistencia de datos
-    ├── frontend/                # Teacher Dashboard
-    │   ├── Dockerfile
-    │   ├── package.json
-    │   ├── tailwind.config.js
-    │   ├── public/
-    │   └── src/
-    │       ├── components/
-    │       │   ├── HomeDashboard.tsx
-    │       │   └── ClaseDashboard.tsx
-    │       └── App.tsx
-    └── webapp_student/          # Student Web App
-        ├── Dockerfile
-        ├── package.json
-        ├── tailwind.config.js
-        ├── public/
-        └── src/
-            ├── components/
-            │   ├── AttendanceRegister.tsx
-            │   ├── Header.tsx
-            │   └── common/
-            │       └── Toast.tsx
-            ├── hooks/
-            │   └── useToast.tsx
-            ├── types/
-            │   └── attendance.ts
-            ├── utils/
-            │   └── errorHandler.ts
-            ├── config/
-            │   └── api.ts
-            └── App.tsx
+📦 SBAS/
+├── 🚀 docker-compose.yml          # Orquestación completa
+├── 🚀 docker-compose.prod.yml     # Configuración producción  
+├── 📖 README.md                   # Este archivo
+├── 📋 DEPLOYMENT.md               # Guía de despliegue
+├── 🔧 ENVIRONMENT.md              # Variables de entorno
+├── 📁 .github/workflows/          # CI/CD automático
+├── 📁 scripts/                    # Scripts de automatización
+│   ├── deploy.sh                  # Deploy completo
+│   ├── setup-dev.sh               # Setup desarrollo
+│   └── test-local.sh              # Pruebas locales
+└── 📁 sbas/                       # Código fuente
+    ├── 🔌 backend/                # API Backend (Railway)
+    │   ├── 🐳 Dockerfile.prod     # Docker producción
+    │   ├── ⚙️ railway.json        # Config Railway
+    │   ├── 📦 package.json        # Dependencias Node
+    │   ├── 🟢 index.js            # Servidor Express
+    │   ├── 📡 beacon.js           # Simulación beacon
+    │   └── 💾 data/               # Base de datos JSON
+    ├── 👩‍🏫 frontend/              # Teacher Dashboard (Vercel)
+    │   ├── 🐳 Dockerfile.prod     # Docker producción
+    │   ├── ⚙️ vercel.json         # Config Vercel
+    │   ├── 🎨 tailwind.config.js  # Estilos
+    │   └── 📁 src/components/     # Componentes React
+    └── 🎓 webapp_student/         # Student App (Vercel)
+        ├── 🐳 Dockerfile.prod     # Docker producción
+        ├── ⚙️ vercel.json         # Config Vercel
+        ├── 🎨 tailwind.config.js  # Estilos
+        └── 📁 src/                # App React + TypeScript
+            ├── components/        # Componentes UI
+            ├── hooks/            # React Hooks
+            ├── services/         # Bluetooth API
+            └── types/            # Definiciones TS
 ```
 
 ---
@@ -201,54 +197,50 @@ docker-compose up --build
 - **Control de Beacon:** Iniciar/detener registro de asistencia
 - **Monitoreo en Tiempo Real:** Actualización automática cada 3 segundos
 - **Búsqueda Avanzada:** Filtrado de estudiantes por nombre
-- **Gestión de Registros:** Eliminar registros individuales o múltiples
-- **Exportación:** Descarga de datos en formato CSV
-- **Estadísticas:** Contadores de asistencia por método de detección
-- **Interfaz Responsive:** Diseño adaptable a dispositivos móviles
+## ✨ **Características Principales**
 
-### Student Web App
-- **Sistema de Login:** Validación de nombres con regex avanzado
-- **Detección Automática:** Verifica clases activas automáticamente
-- **Registro de Asistencia:** Un clic para registrar presencia
-- **Sistema de Notificaciones:** Toasts informativos, de éxito, error y advertencia
-- **Bloqueo de Seguridad:** Sesión bloqueada post-registro para prevenir fraude
-- **Persistencia de Sesión:** Mantiene login entre recargas de página
-- **Indicadores de Conexión:** Estado de conectividad en tiempo real
-- **Progressive Web App:** Funcionalidad offline básica
+### 👩‍🏫 **Teacher Dashboard**
+- 📊 **Dashboard en tiempo real** - Actualizaciones automáticas cada 3s
+- 🗓️ **Gestión de clases** - Crear y administrar clases por fecha
+- 🔛 **Control de beacon** - Iniciar/detener registro de asistencia
+- 🔍 **Búsqueda avanzada** - Filtrar por nombre de estudiante
+- 🗑️ **Gestión de registros** - Eliminar individuales o múltiples
+- 📥 **Exportar CSV** - Descargar datos para análisis
+- 📱 **Diseño responsive** - Funciona en cualquier dispositivo
 
-### Backend API
-- **Endpoints RESTful:** API completa para todas las operaciones
-- **Simulación de Beacon:** Modo virtual para desarrollo y testing
-- **Persistencia de Datos:** Almacenamiento en archivos JSON
-- **Health Monitoring:** Endpoint de salud del sistema
-- **Logging Estructurado:** Logs detallados para debugging
-- **CORS Configurado:** Comunicación segura entre servicios
-- **Validación de Datos:** Validación de entrada en todos los endpoints
+### 🎓 **Student App**
+- 🔐 **Login seguro** - Validación avanzada de nombres
+- 🔍 **Detección automática** - Verifica clases activas
+- ⚡ **Registro rápido** - Un clic para asistencia
+- 🔔 **Notificaciones toast** - Feedback instantáneo
+- 🛡️ **Anti-fraude** - Sesión bloqueada post-registro
+- 💾 **Persistencia** - Mantiene sesión entre recargas
+- 📶 **Estado de conexión** - Indicadores en tiempo real
+- 📱 **PWA ready** - Instalable como app nativa
+
+### 🔌 **Backend API**
+- 🚀 **RESTful API** - Endpoints completos y documentados
+- 🎯 **Beacon virtual** - Simulación para desarrollo
+- 💾 **Persistencia JSON** - Base de datos simple y confiable
+- 🏥 **Health monitoring** - Monitoreo de sistema
+- 📝 **Logging avanzado** - Trazabilidad completa
+- 🌐 **CORS configurado** - Comunicación segura
+- ✅ **Validación robusta** - Entrada de datos validada
 
 ---
 
-## API Endpoints
+## 📋 **API Reference**
 
-### Beacon Management
-```
-GET    /api/beacon/status      # Estado del beacon
-POST   /api/beacon/start       # Iniciar clase
-POST   /api/beacon/stop        # Finalizar clase
-```
-
-### Attendance Management
-```
-GET    /api/attendance         # Obtener registros
-POST   /api/attendance/register # Registrar asistencia
-DELETE /api/attendance/:id     # Eliminar registro específico
-DELETE /api/attendance/clear   # Limpiar registros por fecha
-DELETE /api/attendance/delete-multiple # Eliminar múltiples registros
-```
-
-### System Health
-```
-GET    /health                 # Estado del sistema
-```
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/api/beacon/status` | 📡 Estado actual del beacon |
+| `POST` | `/api/beacon/start` | ▶️ Iniciar clase y beacon |
+| `POST` | `/api/beacon/stop` | ⏹️ Finalizar clase |
+| `GET` | `/api/attendance` | 📋 Obtener registros de asistencia |
+| `POST` | `/api/attendance/register` | ✅ Registrar nueva asistencia |
+| `DELETE` | `/api/attendance/:id` | 🗑️ Eliminar registro específico |
+| `DELETE` | `/api/attendance/clear` | 🧹 Limpiar por fecha |
+| `GET` | `/health` | 🏥 Estado del sistema |
 
 ---
 
@@ -256,89 +248,102 @@ GET    /health                 # Estado del sistema
 
 ### Variables de Entorno
 
-**Backend:**
-- `NODE_ENV`: Entorno de ejecución (development/production)
-- `BEACON_MODE`: Modo de beacon (simulate/real)
-- `PORT`: Puerto del servidor (default: 5000)
+## 🔧 **Variables de Entorno**
 
-**Frontend Apps:**
-- `REACT_APP_API_URL`: URL del backend API
-- `PORT`: Puerto de la aplicación React
+| Variable | Descripción | Ejemplo |
+|----------|-------------|---------|
+| `NODE_ENV` | Entorno de ejecución | `production` |
+| `REACT_APP_API_URL` | URL del backend | `https://truthful-balance-production.up.railway.app` |
+| `REACT_APP_ENV` | Entorno frontend | `production` |
+| `GENERATE_SOURCEMAP` | Generar source maps | `false` |
+| `BEACON_MODE` | Modo del beacon | `simulate` |
+| `PORT` | Puerto del servidor | `5000` |
 
-### Personalización
-
-1. **Cambiar puertos:** Editar `docker-compose.yml`
-2. **Configurar CORS:** Modificar `sbas/backend/index.js`
-3. **Ajustar intervalos:** Cambiar polling en `config/api.ts`
-4. **Personalizar UI:** Modificar archivos de componentes React
+Ver [`ENVIRONMENT.md`](ENVIRONMENT.md) para configuración completa.
 
 ---
 
-## Solución de Problemas
+## 🚨 **Solución de Problemas**
 
-### Problemas Comunes
+### 🔧 **Desarrollo Local**
 
-**Puertos ocupados:**
 ```bash
-sudo lsof -ti:3000 | xargs kill -9
-sudo lsof -ti:3001 | xargs kill -9
-sudo lsof -ti:5000 | xargs kill -9
+# Limpiar Docker completamente
+docker-compose down --volumes --rmi all
+docker system prune -af
+
+# Reinstalar dependencias
+rm -rf sbas/*/node_modules
+./scripts/setup-dev.sh
+
+# Verificar puertos libres
+sudo lsof -ti:3000,3001,5000 | xargs kill -9
 ```
 
-**Problemas de caché Docker:**
-```bash
-docker-compose down
-docker system prune -f
-docker-compose up --build --force-recreate
-```
+### 🌐 **Problemas de Producción**
 
-**Error de permisos:**
 ```bash
-sudo chown -R $USER:$USER .
-```
+# Verificar status de servicios
+curl https://truthful-balance-production.up.railway.app/health
+curl https://frontend-h2cfttp28-hyos332s-projects.vercel.app
+curl https://webapp-student-a917d4tbh-hyos332s-projects.vercel.app
 
-### Logs de Debugging
-```bash
-# Ver todos los logs
-docker-compose logs
+# Logs de Railway
+railway logs
 
-# Logs específicos con follow
-docker-compose logs -f backend
-docker-compose logs -f frontend-teacher
-docker-compose logs -f webapp-student
+# Redeployar si es necesario
+./scripts/deploy.sh
 ```
 
 ---
 
-## Desarrollo y Contribución
+## 🔮 **Roadmap y Futuras Funcionalidades**
 
-### Configuración de Desarrollo
+### 🚀 **Próximas Características**
+- [ ] 🔐 **Autenticación JWT** - Sistema de login seguro multi-rol
+- [ ] 🗄️ **PostgreSQL** - Base de datos robusta para producción
+- [ ] 📱 **App Móvil** - Flutter con detección BLE real
+- [ ] 📊 **Analytics** - Dashboard con métricas avanzadas
+- [ ] 📈 **Reportes Excel** - Exportación con gráficos
+- [ ] 🔔 **Push Notifications** - Alertas en tiempo real
+- [ ] 🏢 **Multi-tenant** - Soporte múltiples instituciones
+- [ ] 🌍 **i18n** - Internacionalización completa
 
-1. **Instalar dependencias localmente** (opcional, para IDE support):
-   ```bash
-   cd sbas/backend && npm install
-   cd sbas/frontend && npm install
-   cd sbas/webapp_student && npm install
-   ```
+### 🛠️ **Para Desarrolladores**
 
-2. **Desarrollo con hot reload:** Los volúmenes Docker permiten hot reload automático
+```bash
+# Setup completo de desarrollo
+git clone https://github.com/Hyos332/Smart-Beacon-Attendance-System-SBAS-.git
+cd Smart-Beacon-Attendance-System-SBAS-
+./scripts/setup-dev.sh
 
-3. **Testing:** Cada aplicación incluye Jest y Testing Library
+# Testing
+npm test          # En cada directorio sbas/*/
+./scripts/test-local.sh
 
-### Próximas Funcionalidades
-
-- **Autenticación JWT:** Sistema de login seguro
-- **Base de datos SQL:** PostgreSQL para producción
-- **App móvil nativa:** Flutter para detección BLE real
-- **Analytics avanzado:** Dashboard de métricas y reportes
-- **Exportación Excel:** Reportes formateados
-- **Notificaciones push:** Alertas en tiempo real
-- **Multi-tenant:** Soporte para múltiples instituciones
+# Contribuir
+git checkout -b feature/nueva-funcionalidad
+# ... hacer cambios ...
+git commit -m "feat: nueva funcionalidad"
+git push origin feature/nueva-funcionalidad
+```
 
 ---
 
-## Licencia y Contacto
+## 📄 **Licencia y Contacto**
 
-Este proyecto es de código abierto y está disponible bajo la licencia MIT. Para contribuciones, reportes de bugs o preguntas, por favor crear un issue en el repositorio.
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![GitHub Issues](https://img.shields.io/github/issues/Hyos332/Smart-Beacon-Attendance-System-SBAS-)](https://github.com/Hyos332/Smart-Beacon-Attendance-System-SBAS-/issues)
+[![GitHub Stars](https://img.shields.io/github/stars/Hyos332/Smart-Beacon-Attendance-System-SBAS-)](https://github.com/Hyos332/Smart-Beacon-Attendance-System-SBAS-/stargazers)
 
-**Desarrollado para automatizar y modernizar el control de asistencias en entornos educativos.**
+**📧 Contacto:** [Crear Issue](https://github.com/Hyos332/Smart-Beacon-Attendance-System-SBAS-/issues/new)
+
+**💡 Contribuciones:** ¡Todas son bienvenidas! Lee [`CONTRIBUTING.md`](CONTRIBUTING.md)
+
+---
+
+## 🎉 **¡Gracias por usar SBAS!**
+
+**Desarrollado con ❤️ para modernizar la gestión de asistencias educativas.**
+
+🌟 **¡Dale una estrella si te gustó el proyecto!** 🌟
