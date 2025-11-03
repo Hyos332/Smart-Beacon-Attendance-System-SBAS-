@@ -13,11 +13,6 @@ services:
       - /var/run/dbus:/var/run/dbus  # Para acceso BLE
     privileged: true  # Necesario para BLE real
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/api/beacon/status"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   frontend-teacher:
     build:
