@@ -1,7 +1,7 @@
 # 🎓 Smart Beacon Attendance System (SBAS)
 
 [![🚀 Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-Available-brightgreen)](https://frontend-95wrkrk7t-hyos332s-projects.vercel.app)
-[![Student App](https://img.shields.io/badge/📱%20Student%20App-Live-blue)](https://webapp-student-6k450vtmz-hyos332s-projects.vercel.app)
+[![Student App](https://img.shields.io/badge/📱%20Student%20App-Live-blue)](https://webapp-student-38xxjxjbi-hyos332s-projects.vercel.app)
 [![API Backend](https://img.shields.io/badge/🔌%20API%20Backend-Live-orange)](https://truthful-balance-production.up.railway.app)
 
 ## 🌟 **¡SISTEMA EN PRODUCCIÓN!**
@@ -21,7 +21,7 @@
 | 📱 **Aplicación** | 🔗 **URL en Producción** | 📋 **Descripción** |
 |------------------|--------------------------|-------------------|
 | **👩‍🏫 Teacher Dashboard** | [frontend-95wrkrk7t-hyos332s-projects.vercel.app](https://frontend-95wrkrk7t-hyos332s-projects.vercel.app) | Dashboard para profesores |
-| **🎓 Student App** | [webapp-student-6k450vtmz-hyos332s-projects.vercel.app](https://webapp-student-6k450vtmz-hyos332s-projects.vercel.app) | App para registro de estudiantes |
+| **🎓 Student App** | [webapp-student-38xxjxjbi-hyos332s-projects.vercel.app](https://webapp-student-38xxjxjbi-hyos332s-projects.vercel.app) | App para registro de estudiantes |
 | **🔌 Backend API** | [truthful-balance-production.up.railway.app](https://truthful-balance-production.up.railway.app) | API REST en Railway |
 
 ---
