@@ -55,19 +55,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
     }
   }, [date]);
 
-  useEffect(() => {
-    fetchAttendance();
-    const interval = setInterval(fetchAttendance, 3000);
-    return () => clearInterval(interval);
-  }, [date, fetchAttendance]);
-
-  useEffect(() => {
-    fetchBeaconStatus();
-    const interval = setInterval(fetchBeaconStatus, 2000);
-    return () => clearInterval(interval);
-  }, [date]);
-
-  const fetchBeaconStatus = async () => {
+  const fetchBeaconStatus = useCallback(async () => {
     try {
       const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.BEACON.STATUS}`;
       const res = await fetch(url);
@@ -79,7 +67,56 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
     } catch (error) {
       console.error('Error fetching beacon status:', error);
     }
-  };
+  }, []);
+
+  // ✅ FIX - Polling de asistencia con cleanup y tipos
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (beaconActive) {
+      fetchAttendance(); // Primera llamada inmediata
+      interval = setInterval(fetchAttendance, 5000); // Cada 5 segundos
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [beaconActive, fetchAttendance]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    const startPolling = () => {
+      fetchBeaconStatus(); // Primera llamada
+      interval = setInterval(fetchBeaconStatus, 5000); // Cada 5 segundos (en lugar de 3)
+    };
+    
+    // Solo hacer polling cuando es necesario
+    if (document.visibilityState === 'visible') {
+      startPolling();
+    }
+    
+    // Pausar polling cuando la tab no está visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        startPolling();
+      } else if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [fetchBeaconStatus]);
 
   const handleStartClass = async () => {
     try {
@@ -142,7 +179,6 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
       }
     } catch (error) {
       console.error('Error deleting records:', error);
-      // Arreglar el error de TypeScript
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       alert(`❌ Error: ${errorMessage}`);
     } finally {
@@ -204,7 +240,6 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
       }
     } catch (error) {
       console.error('Error deleting single record:', error);
-      // Arreglar el error de TypeScript
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       alert(`❌ Error: ${errorMessage}`);
     } finally {
@@ -495,7 +530,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
                         ) : (
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
-                          </svg>
+                        </svg>
                         )}
                         <span>Eliminar ({selectedRecords.size})</span>
                       </button>
