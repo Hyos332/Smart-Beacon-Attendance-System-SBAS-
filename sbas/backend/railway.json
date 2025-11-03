@@ -1,9 +1,9 @@
 {
   "build": {
-    "buildCommand": "npm ci"
+    "builder": "nixpacks"
   },
   "deploy": {
-    "startCommand": "npm start",
+    "startCommand": "node index.js",
     "healthcheckPath": "/health"
   }
 }
