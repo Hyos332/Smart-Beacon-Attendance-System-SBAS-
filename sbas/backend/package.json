@@ -1,10 +1,10 @@
 {
   "name": "sbas-backend",
   "version": "1.0.0",
-  "main": "dist/index.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts",
+    "start": "node index.js",
+    "dev": "nodemon index.js",
     "build": "tsc",
     "test": "node test.js",
     "db:generate": "prisma generate",

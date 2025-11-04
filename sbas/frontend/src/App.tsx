@@ -10,7 +10,19 @@ function App() {
   useEffect(() => {
     const stored = localStorage.getItem("prof_classes");
     if (stored) {
-      setClasses(JSON.parse(stored));
+      try {
+        const parsedClasses = JSON.parse(stored);
+        setClasses(parsedClasses);
+        
+        // Restaurar clase activa si existe
+        const activeStored = localStorage.getItem("active_class");
+        if (activeStored) {
+          setActiveClass(activeStored);
+        }
+      } catch (error) {
+        console.error('Error loading stored classes:', error);
+        setClasses([]);
+      }
     }
   }, []);
 
@@ -19,6 +31,15 @@ function App() {
     localStorage.setItem("prof_classes", JSON.stringify(classes));
   }, [classes]);
 
+  // Guardar clase activa
+  useEffect(() => {
+    if (activeClass) {
+      localStorage.setItem("active_class", activeClass);
+    } else {
+      localStorage.removeItem("active_class");
+    }
+  }, [activeClass]);
+
   const handleStartClass = () => {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -26,7 +47,15 @@ function App() {
     const dd = String(today.getDate()).padStart(2, '0');
     const dateStr = `${yyyy}-${mm}-${dd}`;
     setActiveClass(dateStr);
-    setClasses(prev => [...prev, { date: dateStr }]);
+    
+    // Solo agregar si no existe ya
+    setClasses(prev => {
+      const exists = prev.some(c => c.date === dateStr);
+      if (!exists) {
+        return [...prev, { date: dateStr }];
+      }
+      return prev;
+    });
   };
 
   const handleDeleteClass = (idx: number) => {

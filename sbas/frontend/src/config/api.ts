@@ -1,25 +1,25 @@
 export const API_CONFIG = {
-  BASE_URL: process.env.NODE_ENV === 'production' 
-    ? 'https://diligent-analysis-production-44fb.up.railway.app'  
-    : 'http://localhost:5000',
+  BASE_URL: process.env.REACT_APP_API_URL || 
+    (process.env.NODE_ENV === 'production' 
+      ? 'https://truthful-balance-production.up.railway.app'
+      : 'http://localhost:5000'),
   ENDPOINTS: {
-    ATTENDANCE: {
-      LIST: '/api/attendance',
-      REGISTER: '/api/attendance/register',
-      DELETE: '/api/attendance',
-      CLEAR: '/api/attendance/clear',
-      DELETE_MULTIPLE: '/api/attendance/delete-multiple'
-    },
     BEACON: {
       STATUS: '/api/beacon/status',
       START: '/api/beacon/start',
       STOP: '/api/beacon/stop'
     },
-    HEALTH: '/health'
+    ATTENDANCE: {
+      LIST: '/api/attendance',
+      REGISTER: '/api/attendance/register',
+      DELETE: '/api/attendance/delete',
+      CLEAR: '/api/attendance/clear',
+      CHECK: '/api/attendance/check'
+    }
   }
 };
 
 export const POLLING_INTERVALS = {
   BEACON_STATUS: 5000,  
-  ATTENDANCE_LIST: 5000  
+  ATTENDANCE_LIST: 5000
 };
