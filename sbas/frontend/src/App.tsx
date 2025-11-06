@@ -5,7 +5,7 @@ import { ToastProvider } from "./hooks/useToast";
 
 function App() {
   const [activeClass, setActiveClass] = useState<string | null>(null);
-  const [classes, setClasses] = useState<{ date: string }[]>([]);
+  const [classes, setClasses] = useState<{ date: string, name: string }[]>([]);
 
   // Cargar clases desde localStorage al iniciar
   useEffect(() => {
@@ -41,21 +41,14 @@ function App() {
     }
   }, [activeClass]);
 
-  const handleStartClass = () => {
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const dateStr = `${yyyy}-${mm}-${dd}`;
+  const handleStartClass = (name: string, dateStr: string) => {
     setActiveClass(dateStr);
-    
-    // Solo agregar si no existe ya
     setClasses(prev => {
       const exists = prev.some(c => c.date === dateStr);
       if (!exists) {
-        return [...prev, { date: dateStr }];
+        return [...prev, { date: dateStr, name }];
       }
-      return prev;
+      return prev.map(c => c.date === dateStr ? { ...c, name } : c);
     });
   };
 
@@ -70,9 +63,11 @@ function App() {
   const handleBack = () => setActiveClass(null);
 
   if (activeClass) {
+    const current = classes.find(c => c.date === activeClass);
+    const currentName = current?.name || '';
     return (
       <ToastProvider>
-        <ClaseDashboard date={activeClass} onBack={handleBack} />
+        <ClaseDashboard date={activeClass} className={currentName} onBack={handleBack} />
       </ToastProvider>
     );
   }

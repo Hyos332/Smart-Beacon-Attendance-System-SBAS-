@@ -11,7 +11,7 @@ type Attendance = {
   detection_method: string;
 };
 
-export default function ClaseDashboard({ date, onBack }: { date: string, onBack: () => void }) {
+export default function ClaseDashboard({ date, className, onBack }: { date: string, className?: string, onBack: () => void }) {
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [beaconActive, setBeaconActive] = useState(false);
   const [, setStatus] = useState<string | null>(null);
@@ -300,21 +300,25 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
   );
 
   const exportToCSV = () => {
+    const meta = [
+      `Clase,${(className || 'Sin nombre').replaceAll(',', ' ')}`,
+      `Fecha,${new Date(date).toLocaleDateString('es-ES')}`,
+      ''
+    ];
     const headers = ['Estudiante', 'Hora de Registro', 'Método de Detección'];
-    const csvContent = [
-      headers.join(','),
-      ...attendance.map(record => [
-        record.student_id,
-        formatTime(record.timestamp),
-        record.detection_method.toUpperCase()
-      ].join(','))
-    ].join('\n');
+    const rows = attendance.map(record => [
+      record.student_id,
+      formatTime(record.timestamp),
+      record.detection_method.toUpperCase()
+    ].join(','));
+    const csvContent = [...meta, headers.join(','), ...rows].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `asistencia_${date}.csv`);
+    const safeName = (className && className.trim().length > 0) ? className.replace(/[^a-zA-Z0-9-_ ]/g, '').replace(/\s+/g, '_') : date;
+    link.setAttribute('download', `asistencia_${safeName || date}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -345,7 +349,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
               
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  Clase del {new Date(date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                  {className && className.trim().length > 0 ? className : 'Clase'}
                 </h1>
                 <p className="text-gray-600">
                   {formatDate(date)}
@@ -374,6 +378,13 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
                   </div>
                 </div>
               </div>
+
+              {className && (
+                <div className="hidden md:block px-4 py-2 rounded-lg border bg-indigo-50 border-indigo-200 text-indigo-700 max-w-xs truncate" title={className}>
+                  <span className="text-xs uppercase tracking-wide opacity-80">Clase</span>
+                  <div className="text-sm font-medium leading-tight truncate">{className}</div>
+                </div>
+              )}
 
               {beaconActive ? (
                 <button
@@ -474,7 +485,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-              <h2 className="text-xl font-bold text-gray-900">Lista de Asistencia</h2>
+              <h2 className="text-xl font-bold text-gray-900">{`Lista de Asistencia${className ? ' — ' + className : ''}`}</h2>
               
               <div className="flex flex-wrap items-center gap-3">
                 {/* Buscador */}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { API_CONFIG } from "../config/api";
 import ConfirmModal from "./common/ConfirmModal";
+import CreateClassModal from "./common/CreateClassModal";
 import { useToast } from "../hooks/useToast";
 
 export default function HomeDashboard({
@@ -9,8 +10,8 @@ export default function HomeDashboard({
   onDeleteClass,
   onSelectClass,
 }: {
-  onStartClass: () => void;
-  classes: { date: string }[];
+  onStartClass: (name: string, date: string) => void;
+  classes: { date: string, name: string }[];
   onDeleteClass: (idx: number) => void;
   onSelectClass: (date: string) => void;
 }) {
@@ -18,6 +19,7 @@ export default function HomeDashboard({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmText, setConfirmText] = useState<string>("");
   const [onConfirmAction, setOnConfirmAction] = useState<() => void>();
+  const [createOpen, setCreateOpen] = useState(false);
   const formatDate = (dateStr: string): string => {
     const date = new Date(dateStr);
     const options: Intl.DateTimeFormatOptions = { 
@@ -156,7 +158,7 @@ export default function HomeDashboard({
             <p className="text-gray-600">Administra y revisa el registro de asistencia de tus clases</p>
           </div>
           <button
-            onClick={() => { onStartClass(); showSuccess('Clase creada'); }}
+            onClick={() => setCreateOpen(true)}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 font-semibold flex items-center space-x-3"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,7 +180,7 @@ export default function HomeDashboard({
               Comienza creando tu primera clase para gestionar la asistencia de tus estudiantes
             </p>
             <button
-              onClick={onStartClass}
+              onClick={() => setCreateOpen(true)}
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
             >
               Crear Primera Clase
@@ -227,11 +229,9 @@ export default function HomeDashboard({
                   {/* Información de la clase */}
                   <div className="mb-4">
                     <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-indigo-600 transition-colors">
-                      Clase del {new Date(clase.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      {clase.name || 'Clase sin nombre'}
                     </h3>
-                    <p className="text-gray-600 text-sm">
-                      {formatDate(clase.date)}
-                    </p>
+                    <p className="text-gray-600 text-sm">{formatDate(clase.date)}</p>
                   </div>
 
                   {/* Estadísticas */}
@@ -283,6 +283,17 @@ export default function HomeDashboard({
         cancelText="Cancelar"
         onConfirm={() => { if (onConfirmAction) onConfirmAction(); }}
         onClose={() => setConfirmOpen(false)}
+      />
+
+      <CreateClassModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreate={({ name, date }) => {
+          setCreateOpen(false);
+          onStartClass(name, date);
+          onSelectClass(date);
+          showSuccess('Clase creada');
+        }}
       />
     </div>
   );
