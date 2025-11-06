@@ -286,3 +286,66 @@ router.get('/my-attendances', authenticateToken, requireRole(['STUDENT']), async
 });
 
 export default router;
+// DELETE /api/attendance/delete/:id - Eliminar un registro (docente)
+router.delete('/delete/:id', authenticateToken, requireRole(['TEACHER']), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+
+    const attendance = await prisma.attendance.findUnique({ where: { id }, include: { class: true } });
+    if (!attendance || attendance.class.teacherId !== req.user!.userId) {
+      return res.status(404).json({ error: 'Registro no encontrado' });
+    }
+
+    await prisma.attendance.delete({ where: { id } });
+    res.json({ message: 'Registro eliminado' });
+  } catch (error) {
+    console.error('Error deleting attendance:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// DELETE /api/attendance/delete-multiple - Eliminar varios registros por id (docente)
+router.delete('/delete-multiple', authenticateToken, requireRole(['TEACHER']), async (req: AuthRequest, res) => {
+  try {
+    const ids: string[] = (req.body && Array.isArray(req.body.ids)) ? req.body.ids : [];
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'ids es requerido' });
+    }
+
+    const toDelete = await prisma.attendance.findMany({
+      where: { id: { in: ids }, class: { teacherId: req.user!.userId } },
+      select: { id: true }
+    });
+
+    await prisma.attendance.deleteMany({ where: { id: { in: toDelete.map(a => a.id) } } });
+    res.json({ message: `Eliminados ${toDelete.length} registro(s)` });
+  } catch (error) {
+    console.error('Error deleting multiple attendance:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// DELETE /api/attendance/clear?date=YYYY-MM-DD - Limpiar todos los registros de una fecha (docente)
+router.delete('/clear', authenticateToken, requireRole(['TEACHER']), async (req: AuthRequest, res) => {
+  try {
+    const date = (req.query.date as string) || '';
+    if (!date) {
+      return res.status(400).json({ error: 'date es requerido (YYYY-MM-DD)' });
+    }
+
+    const dayStart = new Date(`${date}T00:00:00.000Z`);
+    const dayEnd = new Date(`${date}T23:59:59.999Z`);
+
+    const deleted = await prisma.attendance.deleteMany({
+      where: {
+        createdAt: { gte: dayStart, lte: dayEnd },
+        class: { teacherId: req.user!.userId },
+      }
+    });
+
+    res.json({ message: `Eliminados ${deleted.count} registro(s)` });
+  } catch (error) {
+    console.error('Error clearing attendance:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});

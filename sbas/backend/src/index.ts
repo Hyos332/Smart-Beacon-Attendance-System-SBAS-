@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import { connectDatabase, disconnectDatabase, seedDatabase } from './database/prisma';
 import authRoutes from './routes/auth';
 import attendanceRoutes from './routes/attendance';
+import beaconRoutes from './routes/beacon';
 
 // Cargar variables de entorno
 dotenv.config();
@@ -51,6 +52,7 @@ app.use(limiter);
 // Rutas de la API
 app.use('/api/auth', authRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/beacon', beaconRoutes);
 
 // Ruta de health check
 app.get('/health', (req, res) => {

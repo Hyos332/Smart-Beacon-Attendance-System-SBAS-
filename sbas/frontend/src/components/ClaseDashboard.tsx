@@ -3,7 +3,7 @@ import { API_CONFIG } from "../config/api";
 import { apiFetch } from "../config/http";
 
 type Attendance = {
-  id: number;
+  id: string;
   student_id: string;
   timestamp: string;
   detection_method: string;
@@ -16,7 +16,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRecords, setSelectedRecords] = useState<Set<number>>(new Set());
+  const [selectedRecords, setSelectedRecords] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchAttendance = useCallback(async () => {
@@ -215,7 +215,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
     }
   };
 
-  const handleDeleteSingle = async (id: number, studentName: string) => {
+  const handleDeleteSingle = async (id: string, studentName: string) => {
     if (!window.confirm(`¿Eliminar el registro de asistencia de "${studentName}"?`)) {
       return;
     }
@@ -244,7 +244,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
     }
   };
 
-  const handleSelectRecord = (id: number) => {
+  const handleSelectRecord = (id: string) => {
     const newSelected = new Set(selectedRecords);
     if (newSelected.has(id)) {
       newSelected.delete(id);
