@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 interface ConfirmModalProps {
   open: boolean;
@@ -21,11 +21,20 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onConfirm,
   onClose,
 }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  useEffect(() => {
+    if (open) {
+      const t = setTimeout(() => setIsVisible(true), 10);
+      return () => clearTimeout(t);
+    }
+    setIsVisible(false);
+  }, [open]);
+
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6 border border-gray-100">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center ${isVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}>
+      <div className={`absolute inset-0 bg-black/30 ${isVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`} onClick={onClose} />
+      <div className={`relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 border border-gray-100 transform transition-all duration-200 ${isVisible ? 'scale-100 translate-y-0' : 'scale-95 translate-y-2'}`}>
         <div className="flex items-start">
           <div className="bg-red-50 rounded-lg p-2 mr-3">
             <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
