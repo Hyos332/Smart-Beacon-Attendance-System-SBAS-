@@ -13,7 +13,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [beaconActive, setBeaconActive] = useState(false);
   const [, setStatus] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRecords, setSelectedRecords] = useState<Set<string>>(new Set());
@@ -54,14 +54,14 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
 
   const fetchBeaconStatus = useCallback(async () => {
     try {
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.BEACON.STATUS}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        setBeaconActive(data.active);
-        setStatus(data.active ? 'Clase activa - Registrando asistencia' : 'Clase inactiva');
-      }
+      const url = `${API_CONFIG.ENDPOINTS.BEACON.STATUS}`;
+      const data = await apiFetch<{ active: boolean }>(url);
+      setBeaconActive(!!data.active);
+      setStatus(data.active ? 'Clase activa - Registrando asistencia' : 'Clase inactiva');
     } catch (error) {
+      // Si falla auth u otra causa, considerar clase inactiva y quitar loading
+      setBeaconActive(false);
+      setIsLoading(false);
       console.error('Error fetching beacon status:', error);
     }
   }, []);
@@ -71,8 +71,12 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
     let interval: NodeJS.Timeout | null = null;
     
     if (beaconActive) {
+      setIsLoading(true);
       fetchAttendance(); // Primera llamada inmediata
       interval = setInterval(fetchAttendance, 5000); // Cada 5 segundos
+    } else {
+      // Si no hay clase activa, no debemos mostrar spinner eterno
+      setIsLoading(false);
     }
     
     return () => {
@@ -158,22 +162,14 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
     setIsDeleting(true);
     try {
       const ids = Array.from(selectedRecords);
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ATTENDANCE.DELETE_MULTIPLE}`;
-      const res = await fetch(url, {
+      const url = `${API_CONFIG.ENDPOINTS.ATTENDANCE.DELETE_MULTIPLE}`;
+      const data = await apiFetch<{ message: string }>(url, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids })
       });
-      
-      if (res.ok) {
-        const data = await res.json();
-        alert(`✅ ${data.message}`);
-        setSelectedRecords(new Set());
-        fetchAttendance();
-      } else {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Error al eliminar registros');
-      }
+      alert(`✅ ${data.message}`);
+      setSelectedRecords(new Set());
+      fetchAttendance();
     } catch (error) {
       console.error('Error deleting records:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
@@ -192,20 +188,11 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
 
     setIsDeleting(true);
     try {
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ATTENDANCE.CLEAR}?date=${date}`;
-      const res = await fetch(url, {
-        method: 'DELETE'
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        alert(`✅ ${data.message}`);
-        setAttendance([]);
-        setSelectedRecords(new Set());
-      } else {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Error al limpiar registros');
-      }
+      const url = `${API_CONFIG.ENDPOINTS.ATTENDANCE.CLEAR}?date=${date}`;
+      const data = await apiFetch<{ message: string }>(url, { method: 'DELETE' });
+      alert(`✅ ${data.message}`);
+      setAttendance([]);
+      setSelectedRecords(new Set());
     } catch (error) {
       console.error('Error clearing all records:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
@@ -222,19 +209,10 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
 
     setIsDeleting(true);
     try {
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ATTENDANCE.DELETE}/${id}`;
-      const res = await fetch(url, {
-        method: 'DELETE'
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        alert(`✅ ${data.message}`);
-        fetchAttendance();
-      } else {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Error al eliminar registro');
-      }
+      const url = `${API_CONFIG.ENDPOINTS.ATTENDANCE.DELETE}/${id}`;
+      const data = await apiFetch<{ message: string }>(url, { method: 'DELETE' });
+      alert(`✅ ${data.message}`);
+      fetchAttendance();
     } catch (error) {
       console.error('Error deleting single record:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
