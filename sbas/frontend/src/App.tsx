@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import HomeDashboard from "./components/HomeDashboard";
 import ClaseDashboard from "./components/ClaseDashboard";
+import { ToastProvider } from "./hooks/useToast";
 
 function App() {
   const [activeClass, setActiveClass] = useState<string | null>(null);
@@ -69,16 +70,22 @@ function App() {
   const handleBack = () => setActiveClass(null);
 
   if (activeClass) {
-    return <ClaseDashboard date={activeClass} onBack={handleBack} />;
+    return (
+      <ToastProvider>
+        <ClaseDashboard date={activeClass} onBack={handleBack} />
+      </ToastProvider>
+    );
   }
 
   return (
-    <HomeDashboard
-      onStartClass={handleStartClass}
-      classes={classes}
-      onDeleteClass={handleDeleteClass}
-      onSelectClass={handleSelectClass}
-    />
+    <ToastProvider>
+      <HomeDashboard
+        onStartClass={handleStartClass}
+        classes={classes}
+        onDeleteClass={handleDeleteClass}
+        onSelectClass={handleSelectClass}
+      />
+    </ToastProvider>
   );
 }
 

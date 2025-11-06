@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { API_CONFIG } from "../config/api";
 import { apiFetch } from "../config/http";
+import ConfirmModal from "./common/ConfirmModal";
+import { useToast } from "../hooks/useToast";
 
 type Attendance = {
   id: string;
@@ -18,6 +20,10 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRecords, setSelectedRecords] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState<string>("");
+  const [onConfirmAction, setOnConfirmAction] = useState<() => Promise<void>>();
+  const { showSuccess, showError } = useToast();
 
   const fetchAttendance = useCallback(async () => {
     try {
@@ -152,74 +158,75 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
   };
 
   // FUNCIONES DE LIMPIEZA ACTUALIZADAS
-  const handleDeleteSelected = async () => {
-    if (selectedRecords.size === 0) return;
-    
-    if (!window.confirm(`¿Estás segura de que quieres eliminar ${selectedRecords.size} registro(s) de asistencia?`)) {
-      return;
-    }
-
+  const deleteSelectedRequest = async () => {
     setIsDeleting(true);
     try {
       const ids = Array.from(selectedRecords);
       const url = `${API_CONFIG.ENDPOINTS.ATTENDANCE.DELETE_MULTIPLE}`;
-      const data = await apiFetch<{ message: string }>(url, {
-        method: 'DELETE',
-        body: JSON.stringify({ ids })
-      });
-      alert(`✅ ${data.message}`);
+      const data = await apiFetch<{ message: string }>(url, { method: 'DELETE', body: JSON.stringify({ ids }) });
+      showSuccess(data.message);
       setSelectedRecords(new Set());
       fetchAttendance();
     } catch (error) {
-      console.error('Error deleting records:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      alert(`❌ Error: ${errorMessage}`);
+      showError(errorMessage);
     } finally {
       setIsDeleting(false);
+      setConfirmOpen(false);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedRecords.size === 0) return;
+    setConfirmText(`¿Eliminar ${selectedRecords.size} registro(s) de asistencia?`);
+    setOnConfirmAction(() => deleteSelectedRequest);
+    setConfirmOpen(true);
+  };
+
+  const deleteAllRequest = async () => {
+    setIsDeleting(true);
+    try {
+      const url = `${API_CONFIG.ENDPOINTS.ATTENDANCE.CLEAR}?date=${date}`;
+      const data = await apiFetch<{ message: string }>(url, { method: 'DELETE' });
+      showSuccess(data.message);
+      setAttendance([]);
+      setSelectedRecords(new Set());
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      showError(errorMessage);
+    } finally {
+      setIsDeleting(false);
+      setConfirmOpen(false);
     }
   };
 
   const handleDeleteAll = async () => {
     if (attendance.length === 0) return;
-    
-    if (!window.confirm(`¿Estás segura de que quieres eliminar TODOS los ${attendance.length} registros de esta clase?\n\nEsta acción no se puede deshacer.`)) {
-      return;
-    }
-
-    setIsDeleting(true);
-    try {
-      const url = `${API_CONFIG.ENDPOINTS.ATTENDANCE.CLEAR}?date=${date}`;
-      const data = await apiFetch<{ message: string }>(url, { method: 'DELETE' });
-      alert(`✅ ${data.message}`);
-      setAttendance([]);
-      setSelectedRecords(new Set());
-    } catch (error) {
-      console.error('Error clearing all records:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      alert(`❌ Error: ${errorMessage}`);
-    } finally {
-      setIsDeleting(false);
-    }
+    setConfirmText(`¿Eliminar TODOS los ${attendance.length} registros de esta clase? Esta acción no se puede deshacer.`);
+    setOnConfirmAction(() => deleteAllRequest);
+    setConfirmOpen(true);
   };
 
-  const handleDeleteSingle = async (id: string, studentName: string) => {
-    if (!window.confirm(`¿Eliminar el registro de asistencia de "${studentName}"?`)) {
-      return;
-    }
-
+  const deleteSingleRequest = async (id: string) => {
     setIsDeleting(true);
     try {
       const url = `${API_CONFIG.ENDPOINTS.ATTENDANCE.DELETE}/${id}`;
       const data = await apiFetch<{ message: string }>(url, { method: 'DELETE' });
-      alert(`✅ ${data.message}`);
+      showSuccess(data.message);
       fetchAttendance();
     } catch (error) {
-      console.error('Error deleting single record:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      alert(`❌ Error: ${errorMessage}`);
+      showError(errorMessage);
     } finally {
       setIsDeleting(false);
+      setConfirmOpen(false);
     }
+  };
+
+  const handleDeleteSingle = async (id: string, studentName: string) => {
+    setConfirmText(`¿Eliminar el registro de asistencia de "${studentName}"?`);
+    setOnConfirmAction(() => () => deleteSingleRequest(id));
+    setConfirmOpen(true);
   };
 
   const handleSelectRecord = (id: string) => {
@@ -538,9 +545,31 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
           </div>
 
           {isLoading ? (
-            <div className="p-12 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Cargando asistencia...</p>
+            <div className="p-6">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left w-12"></th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estudiante</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hora de Registro</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Método</th>
+                      <th className="px-6 py-3 text-left w-12"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <tr key={i} className="animate-pulse">
+                        <td className="px-6 py-4"><div className="h-5 w-5 bg-gray-200 rounded" /></td>
+                        <td className="px-6 py-4"><div className="h-4 w-40 bg-gray-200 rounded" /></td>
+                        <td className="px-6 py-4"><div className="h-4 w-28 bg-gray-200 rounded" /></td>
+                        <td className="px-6 py-4"><div className="h-6 w-16 bg-gray-200 rounded-full" /></td>
+                        <td className="px-6 py-4"><div className="h-5 w-5 bg-gray-200 rounded" /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ) : error ? (
             <div className="p-12 text-center">
@@ -667,6 +696,17 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
           )}
         </div>
       </main>
+
+      <ConfirmModal
+        open={confirmOpen}
+        title="Confirmar acción"
+        description={confirmText}
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+        isProcessing={isDeleting}
+        onConfirm={async () => { if (onConfirmAction) { await onConfirmAction(); } }}
+        onClose={() => !isDeleting && setConfirmOpen(false)}
+      />
     </div>
   );
 }

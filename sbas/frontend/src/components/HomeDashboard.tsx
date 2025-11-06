@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { API_CONFIG } from "../config/api";
+import ConfirmModal from "./common/ConfirmModal";
+import { useToast } from "../hooks/useToast";
 
 export default function HomeDashboard({
   onStartClass,
@@ -12,6 +14,10 @@ export default function HomeDashboard({
   onDeleteClass: (idx: number) => void;
   onSelectClass: (date: string) => void;
 }) {
+  const { showSuccess } = useToast();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState<string>("");
+  const [onConfirmAction, setOnConfirmAction] = useState<() => void>();
   const formatDate = (dateStr: string): string => {
     const date = new Date(dateStr);
     const options: Intl.DateTimeFormatOptions = { 
@@ -150,7 +156,7 @@ export default function HomeDashboard({
             <p className="text-gray-600">Administra y revisa el registro de asistencia de tus clases</p>
           </div>
           <button
-            onClick={onStartClass}
+            onClick={() => { onStartClass(); showSuccess('Clase creada'); }}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 font-semibold flex items-center space-x-3"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,9 +205,9 @@ export default function HomeDashboard({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (window.confirm('¿Estás segura de que quieres eliminar esta clase?')) {
-                        onDeleteClass(idx);
-                      }
+                      setConfirmText('¿Eliminar esta clase?');
+                      setOnConfirmAction(() => () => { onDeleteClass(idx); showSuccess('Clase eliminada'); setConfirmOpen(false); });
+                      setConfirmOpen(true);
                     }}
                     className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
                     title="Eliminar clase"
@@ -269,6 +275,15 @@ export default function HomeDashboard({
           </div>
         )}
       </main>
+      <ConfirmModal
+        open={confirmOpen}
+        title="Confirmar"
+        description={confirmText}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={() => { if (onConfirmAction) onConfirmAction(); }}
+        onClose={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }
