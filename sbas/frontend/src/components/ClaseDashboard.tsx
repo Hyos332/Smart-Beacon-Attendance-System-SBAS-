@@ -1,30 +1,35 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { API_CONFIG } from "../config/api";
+import { apiFetch } from "../config/http";
+import ConfirmModal from "./common/ConfirmModal";
+import { useToast } from "../hooks/useToast";
 
 type Attendance = {
-  id: number;
+  id: string;
   student_id: string;
   timestamp: string;
   detection_method: string;
 };
 
-export default function ClaseDashboard({ date, onBack }: { date: string, onBack: () => void }) {
+export default function ClaseDashboard({ date, className, onBack }: { date: string, className?: string, onBack: () => void }) {
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [beaconActive, setBeaconActive] = useState(false);
   const [, setStatus] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRecords, setSelectedRecords] = useState<Set<number>>(new Set());
+  const [selectedRecords, setSelectedRecords] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState<string>("");
+  const [onConfirmAction, setOnConfirmAction] = useState<() => Promise<void>>();
+  const { showSuccess, showError } = useToast();
 
   const fetchAttendance = useCallback(async () => {
     try {
       // ✅ USAR configuración de API
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ATTENDANCE.LIST}?class_date=${date}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data: Attendance[] = await res.json();
+      const url = `${API_CONFIG.ENDPOINTS.ATTENDANCE.LIST}?class_date=${date}`;
+      const data = await apiFetch<Attendance[]>(url);
         console.log(`[FRONTEND] Loaded ${data.length} records for class ${date}:`, data);
         
         // Filtrar registros únicos por student_id
@@ -44,9 +49,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
         
         setAttendance(uniqueAttendance);
         setError(null);
-      } else {
-        throw new Error('Error al cargar asistencia');
-      }
+      
     } catch (error) {
       setError('Error de conexión al servidor');
       console.error('Error fetching attendance:', error);
@@ -57,14 +60,14 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
 
   const fetchBeaconStatus = useCallback(async () => {
     try {
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.BEACON.STATUS}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        setBeaconActive(data.active);
-        setStatus(data.active ? 'Clase activa - Registrando asistencia' : 'Clase inactiva');
-      }
+      const url = `${API_CONFIG.ENDPOINTS.BEACON.STATUS}`;
+      const data = await apiFetch<{ active: boolean }>(url);
+      setBeaconActive(!!data.active);
+      setStatus(data.active ? 'Clase activa - Registrando asistencia' : 'Clase inactiva');
     } catch (error) {
+      // Si falla auth u otra causa, considerar clase inactiva y quitar loading
+      setBeaconActive(false);
+      setIsLoading(false);
       console.error('Error fetching beacon status:', error);
     }
   }, []);
@@ -74,8 +77,12 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
     let interval: NodeJS.Timeout | null = null;
     
     if (beaconActive) {
+      setIsLoading(true);
       fetchAttendance(); // Primera llamada inmediata
       interval = setInterval(fetchAttendance, 5000); // Cada 5 segundos
+    } else {
+      // Si no hay clase activa, no debemos mostrar spinner eterno
+      setIsLoading(false);
     }
     
     return () => {
@@ -151,103 +158,78 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
   };
 
   // FUNCIONES DE LIMPIEZA ACTUALIZADAS
-  const handleDeleteSelected = async () => {
-    if (selectedRecords.size === 0) return;
-    
-    if (!window.confirm(`¿Estás segura de que quieres eliminar ${selectedRecords.size} registro(s) de asistencia?`)) {
-      return;
-    }
-
+  const deleteSelectedRequest = async () => {
     setIsDeleting(true);
     try {
       const ids = Array.from(selectedRecords);
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ATTENDANCE.DELETE_MULTIPLE}`;
-      const res = await fetch(url, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids })
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        alert(`✅ ${data.message}`);
-        setSelectedRecords(new Set());
-        fetchAttendance();
-      } else {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Error al eliminar registros');
-      }
+      const url = `${API_CONFIG.ENDPOINTS.ATTENDANCE.DELETE_MULTIPLE}`;
+      const data = await apiFetch<{ message: string }>(url, { method: 'DELETE', body: JSON.stringify({ ids }) });
+      showSuccess(data.message);
+      setSelectedRecords(new Set());
+      fetchAttendance();
     } catch (error) {
-      console.error('Error deleting records:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      alert(`❌ Error: ${errorMessage}`);
+      showError(errorMessage);
     } finally {
       setIsDeleting(false);
+      setConfirmOpen(false);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedRecords.size === 0) return;
+    setConfirmText(`¿Eliminar ${selectedRecords.size} registro(s) de asistencia?`);
+    setOnConfirmAction(() => deleteSelectedRequest);
+    setConfirmOpen(true);
+  };
+
+  const deleteAllRequest = async () => {
+    setIsDeleting(true);
+    try {
+      const url = `${API_CONFIG.ENDPOINTS.ATTENDANCE.CLEAR}?date=${date}`;
+      const data = await apiFetch<{ message: string }>(url, { method: 'DELETE' });
+      showSuccess(data.message);
+      setAttendance([]);
+      setSelectedRecords(new Set());
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      showError(errorMessage);
+    } finally {
+      setIsDeleting(false);
+      setConfirmOpen(false);
     }
   };
 
   const handleDeleteAll = async () => {
     if (attendance.length === 0) return;
-    
-    if (!window.confirm(`¿Estás segura de que quieres eliminar TODOS los ${attendance.length} registros de esta clase?\n\nEsta acción no se puede deshacer.`)) {
-      return;
-    }
+    setConfirmText(`¿Eliminar TODOS los ${attendance.length} registros de esta clase? Esta acción no se puede deshacer.`);
+    setOnConfirmAction(() => deleteAllRequest);
+    setConfirmOpen(true);
+  };
 
+  const deleteSingleRequest = async (id: string) => {
     setIsDeleting(true);
     try {
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ATTENDANCE.CLEAR}?date=${date}`;
-      const res = await fetch(url, {
-        method: 'DELETE'
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        alert(`✅ ${data.message}`);
-        setAttendance([]);
-        setSelectedRecords(new Set());
-      } else {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Error al limpiar registros');
-      }
+      const url = `${API_CONFIG.ENDPOINTS.ATTENDANCE.DELETE}/${id}`;
+      const data = await apiFetch<{ message: string }>(url, { method: 'DELETE' });
+      showSuccess(data.message);
+      fetchAttendance();
     } catch (error) {
-      console.error('Error clearing all records:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      alert(`❌ Error: ${errorMessage}`);
+      showError(errorMessage);
     } finally {
       setIsDeleting(false);
+      setConfirmOpen(false);
     }
   };
 
-  const handleDeleteSingle = async (id: number, studentName: string) => {
-    if (!window.confirm(`¿Eliminar el registro de asistencia de "${studentName}"?`)) {
-      return;
-    }
-
-    setIsDeleting(true);
-    try {
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ATTENDANCE.DELETE}/${id}`;
-      const res = await fetch(url, {
-        method: 'DELETE'
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        alert(`✅ ${data.message}`);
-        fetchAttendance();
-      } else {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Error al eliminar registro');
-      }
-    } catch (error) {
-      console.error('Error deleting single record:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      alert(`❌ Error: ${errorMessage}`);
-    } finally {
-      setIsDeleting(false);
-    }
+  const handleDeleteSingle = async (id: string, studentName: string) => {
+    setConfirmText(`¿Eliminar el registro de asistencia de "${studentName}"?`);
+    setOnConfirmAction(() => () => deleteSingleRequest(id));
+    setConfirmOpen(true);
   };
 
-  const handleSelectRecord = (id: number) => {
+  const handleSelectRecord = (id: string) => {
     const newSelected = new Set(selectedRecords);
     if (newSelected.has(id)) {
       newSelected.delete(id);
@@ -318,21 +300,25 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
   );
 
   const exportToCSV = () => {
+    const meta = [
+      `Clase,${(className || 'Sin nombre').replaceAll(',', ' ')}`,
+      `Fecha,${new Date(date).toLocaleDateString('es-ES')}`,
+      ''
+    ];
     const headers = ['Estudiante', 'Hora de Registro', 'Método de Detección'];
-    const csvContent = [
-      headers.join(','),
-      ...attendance.map(record => [
-        record.student_id,
-        formatTime(record.timestamp),
-        record.detection_method.toUpperCase()
-      ].join(','))
-    ].join('\n');
+    const rows = attendance.map(record => [
+      record.student_id,
+      formatTime(record.timestamp),
+      record.detection_method.toUpperCase()
+    ].join(','));
+    const csvContent = [...meta, headers.join(','), ...rows].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `asistencia_${date}.csv`);
+    const safeName = (className && className.trim().length > 0) ? className.replace(/[^a-zA-Z0-9-_ ]/g, '').replace(/\s+/g, '_') : date;
+    link.setAttribute('download', `asistencia_${safeName || date}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -363,7 +349,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
               
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  Clase del {new Date(date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                  {className && className.trim().length > 0 ? className : 'Clase'}
                 </h1>
                 <p className="text-gray-600">
                   {formatDate(date)}
@@ -392,6 +378,13 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
                   </div>
                 </div>
               </div>
+
+              {className && (
+                <div className="hidden md:block px-4 py-2 rounded-lg border bg-indigo-50 border-indigo-200 text-indigo-700 max-w-xs truncate" title={className}>
+                  <span className="text-xs uppercase tracking-wide opacity-80">Clase</span>
+                  <div className="text-sm font-medium leading-tight truncate">{className}</div>
+                </div>
+              )}
 
               {beaconActive ? (
                 <button
@@ -492,7 +485,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-              <h2 className="text-xl font-bold text-gray-900">Lista de Asistencia</h2>
+              <h2 className="text-xl font-bold text-gray-900">{`Lista de Asistencia${className ? ' — ' + className : ''}`}</h2>
               
               <div className="flex flex-wrap items-center gap-3">
                 {/* Buscador */}
@@ -563,9 +556,31 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
           </div>
 
           {isLoading ? (
-            <div className="p-12 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Cargando asistencia...</p>
+            <div className="p-6">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left w-12"></th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estudiante</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hora de Registro</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Método</th>
+                      <th className="px-6 py-3 text-left w-12"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <tr key={i} className="animate-pulse">
+                        <td className="px-6 py-4"><div className="h-5 w-5 bg-gray-200 rounded" /></td>
+                        <td className="px-6 py-4"><div className="h-4 w-40 bg-gray-200 rounded" /></td>
+                        <td className="px-6 py-4"><div className="h-4 w-28 bg-gray-200 rounded" /></td>
+                        <td className="px-6 py-4"><div className="h-6 w-16 bg-gray-200 rounded-full" /></td>
+                        <td className="px-6 py-4"><div className="h-5 w-5 bg-gray-200 rounded" /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ) : error ? (
             <div className="p-12 text-center">
@@ -692,6 +707,17 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
           )}
         </div>
       </main>
+
+      <ConfirmModal
+        open={confirmOpen}
+        title="Confirmar acción"
+        description={confirmText}
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+        isProcessing={isDeleting}
+        onConfirm={async () => { if (onConfirmAction) { await onConfirmAction(); } }}
+        onClose={() => !isDeleting && setConfirmOpen(false)}
+      />
     </div>
   );
 }

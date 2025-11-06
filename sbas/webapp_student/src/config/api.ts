@@ -1,18 +1,18 @@
 export const API_CONFIG = {
   BASE_URL: process.env.REACT_APP_API_URL || 
     (process.env.NODE_ENV === 'production' 
-      ? 'https://diligent-analysis-production-44fb.up.railway.app'
+      ? 'https://truthful-balance-production.up.railway.app'
       : 'http://localhost:5000'),
   ENDPOINTS: {
-    ATTENDANCE: {
-      REGISTER: '/api/attendance/register',
-      CHECK: '/api/attendance/check',
-      LIST: '/api/attendance'
-    },
     BEACON: {
       STATUS: '/api/beacon/status',
       START: '/api/beacon/start',
       STOP: '/api/beacon/stop'
+    },
+    ATTENDANCE: {
+      LIST: '/api/attendance',
+      REGISTER: '/api/attendance/register',
+      CHECK: '/api/attendance/check'
     },
     STUDENTS: {
       REGISTER: '/api/students/register'

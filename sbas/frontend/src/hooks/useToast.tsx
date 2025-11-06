@@ -1,0 +1,63 @@
+import React, { useState, useCallback, createContext, useContext } from "react";
+import { Toast, ToastType } from "../components/common/Toast";
+
+interface ToastItem {
+  id: string;
+  message: string;
+  type: ToastType;
+  duration?: number;
+}
+
+interface ToastContextType {
+  showToast: (message: string, type: ToastType, duration?: number) => void;
+  showSuccess: (message: string, duration?: number) => void;
+  showError: (message: string, duration?: number) => void;
+  showWarning: (message: string, duration?: number) => void;
+  showInfo: (message: string, duration?: number) => void;
+}
+
+const ToastContext = createContext<ToastContextType | undefined>(undefined);
+
+export const useToast = (): ToastContextType => {
+  const context = useContext(ToastContext);
+  if (!context) {
+    throw new Error('useToast must be used within a ToastProvider');
+  }
+  return context;
+};
+
+interface ToastProviderProps {
+  children: React.ReactNode;
+}
+
+export const ToastProvider: React.FC<ToastProviderProps> = ({ children }: ToastProviderProps) => {
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+
+  const showToast = useCallback((message: string, type: ToastType, duration = 5000) => {
+    const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+    const newToast: ToastItem = { id, message, type, duration };
+    setToasts((prev: ToastItem[]) => [...prev, newToast]);
+  }, []);
+
+  const showSuccess = useCallback((message: string, duration?: number) => showToast(message, 'success', duration), [showToast]);
+  const showError = useCallback((message: string, duration?: number) => showToast(message, 'error', duration), [showToast]);
+  const showWarning = useCallback((message: string, duration?: number) => showToast(message, 'warning', duration), [showToast]);
+  const showInfo = useCallback((message: string, duration?: number) => showToast(message, 'info', duration), [showToast]);
+
+  const removeToast = useCallback((id: string) => setToasts((prev: ToastItem[]) => prev.filter((t: ToastItem) => t.id !== id)), []);
+
+  const contextValue: ToastContextType = { showToast, showSuccess, showError, showWarning, showInfo };
+
+  return (
+    <ToastContext.Provider value={contextValue}>
+      {children}
+      {toasts.map((toast: ToastItem, index: number) => (
+        <div key={toast.id} style={{ top: `${1 + index * 4.5}rem` }} className="fixed right-4 z-50">
+          <Toast message={toast.message} type={toast.type} duration={toast.duration} onClose={() => removeToast(toast.id)} />
+        </div>
+      ))}
+    </ToastContext.Provider>
+  );
+};
+
+
