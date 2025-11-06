@@ -13,6 +13,7 @@ export const API_CONFIG = {
       LIST: '/api/attendance',
       REGISTER: '/api/attendance/register',
       DELETE: '/api/attendance/delete',
+      DELETE_MULTIPLE: '/api/attendance/delete-multiple',
       CLEAR: '/api/attendance/clear',
       CHECK: '/api/attendance/check'
     }

@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { connectDatabase, disconnectDatabase, seedDatabase } from './database/prisma';
 import authRoutes from './routes/auth';
 import attendanceRoutes from './routes/attendance';
@@ -8,12 +10,22 @@ import attendanceRoutes from './routes/attendance';
 // Cargar variables de entorno
 dotenv.config();
 
+// Validación de variables de entorno críticas
+const requiredEnvs = ['JWT_SECRET', 'DATABASE_URL'];
+const missing = requiredEnvs.filter((k) => !process.env[k]);
+if (missing.length) {
+  console.warn(`⚠️ Variables de entorno faltantes: ${missing.join(', ')}`);
+}
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middlewares globales
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Hardening HTTP
+app.use(helmet());
 
 // Configuración de CORS optimizada
 const corsOptions = {
@@ -31,6 +43,10 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Rate limiting básico (evita abuso)
+const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300 });
+app.use(limiter);
 
 // Rutas de la API
 app.use('/api/auth', authRoutes);

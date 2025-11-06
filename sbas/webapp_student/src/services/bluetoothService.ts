@@ -36,7 +36,8 @@ declare global {
 }
 
 export class BluetoothService {
-  private static BEACON_UUID = "aula-101-0000-0000-000000000000";
+  private static BEACON_UUID = process.env.REACT_APP_BEACON_UUID || "aula-101-0000-0000-000000000000";
+  private static NAME_PREFIX = process.env.REACT_APP_BEACON_NAME_PREFIX || undefined;
   
   static async isBluetoothSupported(): Promise<boolean> {
     if (!navigator.bluetooth) {
@@ -53,10 +54,16 @@ export class BluetoothService {
       }
       
       console.log("🔵 Iniciando detección de beacon...");
-      
+
+      const filters: BluetoothLEScanFilter[] = [];
+      if (this.NAME_PREFIX) {
+        filters.push({ namePrefix: this.NAME_PREFIX });
+      }
+
       const device = await navigator.bluetooth!.requestDevice({
-        acceptAllDevices: true,
-        optionalServices: [this.BEACON_UUID]
+        acceptAllDevices: filters.length === 0,
+        filters: filters.length ? filters : undefined,
+        optionalServices: [this.BEACON_UUID as unknown as BluetoothServiceUUID]
       });
       
       if (device) {

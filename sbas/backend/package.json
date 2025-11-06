@@ -1,10 +1,10 @@
 {
   "name": "sbas-backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
+    "start": "node dist/index.js",
+    "dev": "nodemon src/index.ts",
     "build": "tsc",
     "test": "node test.js",
     "db:generate": "prisma generate",
@@ -21,6 +21,8 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "prisma": "^6.18.0",
     "zod": "^4.1.12"

@@ -1,10 +1,9 @@
 import express from 'express';
 import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../database/prisma';
 import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 // Esquemas de validación
 const CreateClassSchema = z.object({
@@ -134,6 +133,49 @@ router.get('/active-classes', authenticateToken, requireRole(['STUDENT']), async
     res.json({ classes: activeClasses });
   } catch (error) {
     console.error('Error fetching active classes:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// GET /api/attendance?class_date=YYYY-MM-DD - Listado de asistencias por fecha (docente)
+router.get('/', authenticateToken, requireRole(['TEACHER']), async (req: AuthRequest, res) => {
+  try {
+    const classDate = (req.query.class_date as string) || '';
+    if (!classDate) {
+      return res.status(400).json({ error: 'class_date es requerido (YYYY-MM-DD)' });
+    }
+
+    const dayStart = new Date(`${classDate}T00:00:00.000Z`);
+    const dayEnd = new Date(`${classDate}T23:59:59.999Z`);
+
+    const attendances = await prisma.attendance.findMany({
+      where: {
+        createdAt: { gte: dayStart, lte: dayEnd },
+        class: { teacherId: req.user!.userId },
+      },
+      include: {
+        class: true,
+        student: {
+          select: { id: true, firstName: true, lastName: true, studentId: true, email: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Adaptar al formato que el dashboard espera
+    const result = attendances.map((a) => ({
+      id: a.id,
+      student_id: a.student.studentId || a.student.id,
+      name: `${a.student.firstName} ${a.student.lastName}`.trim(),
+      timestamp: a.createdAt,
+      class_id: a.classId,
+      class_name: a.class.name,
+      detection_method: 'BLE'
+    }));
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error listing attendance:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });

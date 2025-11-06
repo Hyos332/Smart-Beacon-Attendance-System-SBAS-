@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { API_CONFIG } from "../config/api";
+import { apiFetch } from "../config/http";
 
 type Attendance = {
   id: number;
@@ -21,10 +22,8 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
   const fetchAttendance = useCallback(async () => {
     try {
       // ✅ USAR configuración de API
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ATTENDANCE.LIST}?class_date=${date}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data: Attendance[] = await res.json();
+      const url = `${API_CONFIG.ENDPOINTS.ATTENDANCE.LIST}?class_date=${date}`;
+      const data = await apiFetch<Attendance[]>(url);
         console.log(`[FRONTEND] Loaded ${data.length} records for class ${date}:`, data);
         
         // Filtrar registros únicos por student_id
@@ -44,9 +43,7 @@ export default function ClaseDashboard({ date, onBack }: { date: string, onBack:
         
         setAttendance(uniqueAttendance);
         setError(null);
-      } else {
-        throw new Error('Error al cargar asistencia');
-      }
+      
     } catch (error) {
       setError('Error de conexión al servidor');
       console.error('Error fetching attendance:', error);
