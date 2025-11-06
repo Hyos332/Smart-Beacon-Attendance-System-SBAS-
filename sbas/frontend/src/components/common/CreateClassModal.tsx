@@ -21,6 +21,14 @@ const CreateClassModal: React.FC<CreateClassModalProps> = ({ open, onClose, onCr
   const [submitting, setSubmitting] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
+  useEffect(() => {
+    if (open) {
+      const t = setTimeout(() => setIsVisible(true), 10);
+      return () => clearTimeout(t);
+    }
+    setIsVisible(false);
+  }, [open]);
+
   if (!open) return null;
 
   const canSubmit = name.trim().length >= 3 && /\d{4}-\d{2}-\d{2}/.test(date);
@@ -34,12 +42,6 @@ const CreateClassModal: React.FC<CreateClassModalProps> = ({ open, onClose, onCr
       setSubmitting(false);
     }
   };
-
-  useEffect(() => {
-    // Pequeña animación al montar
-    const t = setTimeout(() => setIsVisible(true), 10);
-    return () => clearTimeout(t);
-  }, []);
 
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center ${isVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}>
