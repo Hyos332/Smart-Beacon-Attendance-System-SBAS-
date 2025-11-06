@@ -86,17 +86,16 @@ app.post('/api/beacon/stop', (req, res) => {
 // Get attendance
 app.get('/api/attendance', async (req, res) => {
   try {
-    const { class_date } = req.query;
+    const { class_id, class_date } = req.query;
     const data = await readData();
-    
-    if (class_date) {
-      const classAttendance = data.attendance.filter(record => 
-        record.class_date === class_date
-      );
-      res.json(classAttendance);
-    } else {
-      res.json(data.attendance);
+    let filtered = data.attendance;
+    if (class_id) {
+      filtered = filtered.filter(record => record.class_id === class_id);
     }
+    if (class_date) {
+      filtered = filtered.filter(record => record.class_date === class_date);
+    }
+    res.json(filtered);
   } catch (error) {
     console.error('Error fetching attendance:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
@@ -106,42 +105,34 @@ app.get('/api/attendance', async (req, res) => {
 // Register attendance
 app.post('/api/attendance/register', async (req, res) => {
   try {
-    const { student_id, method = 'Manual' } = req.body;
-    
-    if (!student_id) {
-      return res.status(400).json({ error: 'student_id es requerido' });
+    const { student_id, method = 'Manual', class_id } = req.body;
+    if (!student_id || !class_id) {
+      return res.status(400).json({ error: 'student_id y class_id son requeridos' });
     }
-    
     if (!beaconStatus.active) {
       return res.status(400).json({ error: 'No hay clase activa' });
     }
-    
     const data = await readData();
-    
     // Verificar duplicados
-    const existing = data.attendance.find(record => 
-      record.student_id === student_id && record.class_date === beaconStatus.class_date
+    const existing = data.attendance.find(record =>
+      record.student_id === student_id && record.class_id === class_id
     );
-    
     if (existing) {
       return res.status(409).json({ error: 'Ya registraste asistencia para esta clase' });
     }
-    
     // Crear nuevo registro
     const newRecord = {
       id: Date.now(),
       student_id,
+      class_id,
       class_date: beaconStatus.class_date,
       timestamp: new Date().toISOString(),
       detection_method: method
     };
-    
     data.attendance.push(newRecord);
     await writeData(data);
-    
-    console.log(`✅ Asistencia registrada: ${student_id} - ${beaconStatus.class_date}`);
-    res.json({ success: true, class_date: beaconStatus.class_date });
-    
+    console.log(`✅ Asistencia registrada: ${student_id} - ${beaconStatus.class_date} - ${class_id}`);
+    res.json({ success: true, class_id, class_date: beaconStatus.class_date });
   } catch (error) {
     console.error('Error registering attendance:', error);
     res.status(500).json({ error: 'Error interno del servidor' });

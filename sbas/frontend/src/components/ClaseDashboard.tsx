@@ -7,6 +7,8 @@ import { useToast } from "../hooks/useToast";
 type Attendance = {
   id: string;
   student_id: string;
+  class_id: string;
+  class_date: string;
   timestamp: string;
   detection_method: string;
 };
@@ -28,25 +30,25 @@ export default function ClaseDashboard({ date, className, onBack }: { date: stri
   const fetchAttendance = useCallback(async () => {
     try {
       // ✅ USAR configuración de API
-      const url = `${API_CONFIG.ENDPOINTS.ATTENDANCE.LIST}?class_date=${date}`;
-      const data = await apiFetch<Attendance[]>(url);
+    // Usar class_id como date (date es el identificador único de la clase)
+    const url = `${API_CONFIG.ENDPOINTS.ATTENDANCE.LIST}?class_id=${date}`;
+    const data = await apiFetch<Attendance[]>(url);
         console.log(`[FRONTEND] Loaded ${data.length} records for class ${date}:`, data);
         
-        // Filtrar registros únicos por student_id
+        // Filtrar registros únicos por student_id SOLO de la clase actual
         const uniqueAttendanceMap = new Map<string, Attendance>();
-        
         data.forEach((record: Attendance) => {
-          const existing = uniqueAttendanceMap.get(record.student_id);
-          if (!existing || new Date(record.timestamp) > new Date(existing.timestamp)) {
-            uniqueAttendanceMap.set(record.student_id, record);
+          if (record.class_id === date) {
+            const existing = uniqueAttendanceMap.get(record.student_id);
+            if (!existing || new Date(record.timestamp) > new Date(existing.timestamp)) {
+              uniqueAttendanceMap.set(record.student_id, record);
+            }
           }
         });
-        
         const uniqueAttendance = Array.from(uniqueAttendanceMap.values())
           .sort((a: Attendance, b: Attendance) => 
             new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
           );
-        
         setAttendance(uniqueAttendance);
         setError(null);
       
@@ -243,7 +245,7 @@ export default function ClaseDashboard({ date, className, onBack }: { date: stri
     if (selectedRecords.size === filteredAttendance.length) {
       setSelectedRecords(new Set());
     } else {
-      setSelectedRecords(new Set(filteredAttendance.map(record => record.id)));
+      setSelectedRecords(new Set(filteredAttendance.map((record: Attendance) => record.id)));
     }
   };
 
@@ -295,7 +297,7 @@ export default function ClaseDashboard({ date, className, onBack }: { date: stri
     }
   };
 
-  const filteredAttendance = attendance.filter(record =>
+  const filteredAttendance = attendance.filter((record: Attendance) =>
     record.student_id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -306,7 +308,7 @@ export default function ClaseDashboard({ date, className, onBack }: { date: stri
       ''
     ];
     const headers = ['Estudiante', 'Hora de Registro', 'Método de Detección'];
-    const rows = attendance.map(record => [
+    const rows = attendance.map((record: Attendance) => [
       record.student_id,
       formatTime(record.timestamp),
       record.detection_method.toUpperCase()
