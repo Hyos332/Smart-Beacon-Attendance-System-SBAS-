@@ -42,6 +42,82 @@ router.get('/status-legacy', async (req, res) => {
   }
 });
 
+// POST /api/beacon/start-legacy - Activar clase SIN autenticación
+router.post('/start-legacy', async (req, res) => {
+  try {
+    const { class_date } = req.body;
+
+    // Buscar o crear clase para la fecha especificada
+    const teacher = await prisma.user.findFirst({
+      where: { role: 'TEACHER' }
+    });
+
+    if (!teacher) {
+      return res.status(500).json({ error: 'No hay profesores en el sistema' });
+    }
+
+    // Buscar clase existente para esta fecha
+    let targetClass = await prisma.class.findFirst({
+      where: {
+        teacherId: teacher.id,
+        createdAt: {
+          gte: new Date(`${class_date}T00:00:00.000Z`),
+          lte: new Date(`${class_date}T23:59:59.999Z`)
+        }
+      }
+    });
+
+    // Si no existe, crear una nueva
+    if (!targetClass) {
+      targetClass = await prisma.class.create({
+        data: {
+          name: `Clase ${class_date}`,
+          description: 'Clase creada automáticamente',
+          beaconId: 'LEGACY_BEACON',
+          isActive: true,
+          teacherId: teacher.id
+        }
+      });
+    } else {
+      // Si existe, activarla
+      targetClass = await prisma.class.update({
+        where: { id: targetClass.id },
+        data: { isActive: true }
+      });
+    }
+
+    res.json({
+      message: 'Clase activada',
+      class: {
+        id: targetClass.id,
+        name: targetClass.name,
+        isActive: targetClass.isActive
+      }
+    });
+
+  } catch (error) {
+    console.error('Error starting class (legacy):', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// POST /api/beacon/stop-legacy - Desactivar clase SIN autenticación
+router.post('/stop-legacy', async (req, res) => {
+  try {
+    // Desactivar todas las clases activas
+    await prisma.class.updateMany({
+      where: { isActive: true },
+      data: { isActive: false }
+    });
+
+    res.json({ message: 'Clase desactivada' });
+
+  } catch (error) {
+    console.error('Error stopping class (legacy):', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 // GET /api/beacon/status - ¿hay una clase activa del docente?
 router.get('/status', authenticateToken, requireRole(['TEACHER']), async (req: AuthRequest, res) => {
   const active = await prisma.class.findFirst({ where: { teacherId: req.user!.userId, isActive: true } });
