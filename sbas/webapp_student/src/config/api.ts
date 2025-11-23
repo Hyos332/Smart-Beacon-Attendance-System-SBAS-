@@ -5,14 +5,14 @@ export const API_CONFIG = {
       : 'http://localhost:5000'),
   ENDPOINTS: {
     BEACON: {
-      STATUS: '/api/beacon/status',
+      STATUS: '/api/beacon/status-legacy',  // Endpoint de compatibilidad temporal
       START: '/api/beacon/start',
       STOP: '/api/beacon/stop'
     },
     ATTENDANCE: {
       LIST: '/api/attendance',
       REGISTER: '/api/attendance/register-legacy',  // Endpoint de compatibilidad temporal
-      CHECK: '/api/attendance/check'
+      CHECK: '/api/attendance/check-legacy'  // Endpoint de compatibilidad temporal
     },
     STUDENTS: {
       REGISTER: '/api/students/register'

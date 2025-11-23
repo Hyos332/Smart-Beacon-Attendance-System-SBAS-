@@ -77,7 +77,7 @@ router.post('/classes', authenticateToken, requireRole(['TEACHER']), async (req:
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Datos inválidos', details: error.issues });
     }
-    
+
     console.error('Error creating class:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
@@ -89,9 +89,9 @@ router.patch('/classes/:id/toggle', authenticateToken, requireRole(['TEACHER']),
     const { id } = req.params;
 
     const existingClass = await prisma.class.findFirst({
-      where: { 
+      where: {
         id,
-        teacherId: req.user!.userId 
+        teacherId: req.user!.userId
       }
     });
 
@@ -197,7 +197,7 @@ router.post('/register-legacy', async (req, res) => {
 
     // Buscar o crear usuario estudiante temporal
     let student = await prisma.user.findFirst({
-      where: { 
+      where: {
         OR: [
           { studentId: student_id },
           { email: `${student_id.toLowerCase().replace(/\s+/g, '_')}@temp.student` }
@@ -210,7 +210,7 @@ router.post('/register-legacy', async (req, res) => {
       const nameParts = student_id.split(' ');
       const firstName = nameParts[0] || 'Estudiante';
       const lastName = nameParts.slice(1).join(' ') || 'Temporal';
-      
+
       student = await prisma.user.create({
         data: {
           email: `${student_id.toLowerCase().replace(/\s+/g, '_')}@temp.student`,
@@ -225,7 +225,7 @@ router.post('/register-legacy', async (req, res) => {
 
     // Buscar clase activa por class_id (que es la fecha en el sistema antiguo)
     let activeClass = await prisma.class.findFirst({
-      where: { 
+      where: {
         id: class_id,
         isActive: true
       }
@@ -235,7 +235,7 @@ router.post('/register-legacy', async (req, res) => {
     if (!activeClass && class_date) {
       const dayStart = new Date(`${class_date}T00:00:00.000Z`);
       const dayEnd = new Date(`${class_date}T23:59:59.999Z`);
-      
+
       activeClass = await prisma.class.findFirst({
         where: {
           isActive: true,
@@ -269,7 +269,7 @@ router.post('/register-legacy', async (req, res) => {
     // Verificar si ya registró asistencia hoy
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const existingAttendance = await prisma.attendance.findFirst({
       where: {
         studentId: student.id,
@@ -279,7 +279,7 @@ router.post('/register-legacy', async (req, res) => {
     });
 
     if (existingAttendance) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Ya registraste tu asistencia para esta clase hoy',
         attendance: existingAttendance
       });
@@ -324,6 +324,71 @@ router.post('/register-legacy', async (req, res) => {
   }
 });
 
+// GET /api/attendance/check-legacy - Verificar si estudiante ya registró asistencia
+router.get('/check-legacy', async (req, res) => {
+  try {
+    const { student_id } = req.query;
+
+    if (!student_id || typeof student_id !== 'string') {
+      return res.status(400).json({ error: 'student_id es requerido' });
+    }
+
+    // Buscar usuario por student_id
+    const student = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { studentId: student_id },
+          { email: `${student_id.toLowerCase().replace(/\s+/g, '_')}@temp.student` }
+        ]
+      }
+    });
+
+    if (!student) {
+      // Si no existe el estudiante, no tiene asistencia
+      return res.json({
+        hasAttendance: false,
+        activeClass: null
+      });
+    }
+
+    // Buscar clase activa
+    const activeClass = await prisma.class.findFirst({
+      where: { isActive: true }
+    });
+
+    if (!activeClass) {
+      return res.json({
+        hasAttendance: false,
+        activeClass: null
+      });
+    }
+
+    // Verificar si ya registró asistencia hoy para esta clase
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const attendance = await prisma.attendance.findFirst({
+      where: {
+        studentId: student.id,
+        classId: activeClass.id,
+        createdAt: { gte: today }
+      }
+    });
+
+    const classDate = activeClass.createdAt.toISOString().split('T')[0];
+
+    res.json({
+      hasAttendance: !!attendance,
+      activeClass: classDate,
+      className: activeClass.name
+    });
+
+  } catch (error) {
+    console.error('Error checking attendance (legacy):', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 // POST /api/attendance/register - Registrar asistencia
 router.post('/register', authenticateToken, requireRole(['STUDENT']), async (req: AuthRequest, res) => {
   try {
@@ -331,7 +396,7 @@ router.post('/register', authenticateToken, requireRole(['STUDENT']), async (req
 
     // Verificar que la clase está activa
     const activeClass = await prisma.class.findFirst({
-      where: { 
+      where: {
         id: data.classId,
         isActive: true,
         beaconId: data.beaconId
@@ -394,7 +459,7 @@ router.post('/register', authenticateToken, requireRole(['STUDENT']), async (req
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Datos inválidos', details: error.issues });
     }
-    
+
     console.error('Error registering attendance:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
