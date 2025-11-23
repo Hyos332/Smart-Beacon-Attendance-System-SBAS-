@@ -137,6 +137,58 @@ router.get('/active-classes', authenticateToken, requireRole(['STUDENT']), async
   }
 });
 
+// ==========================================
+// ENDPOINT DE COMPATIBILIDAD TEMPORAL - LIST
+// ==========================================
+// GET /api/attendance/list-legacy?class_id=YYYY-MM-DD - Listado de asistencias SIN autenticación
+router.get('/list-legacy', async (req, res) => {
+  try {
+    const class_id = (req.query.class_id as string) || '';
+    if (!class_id) {
+      return res.status(400).json({ error: 'class_id es requerido' });
+    }
+
+    // Buscar asistencias por class_id (que puede ser fecha o ID real)
+    const attendances = await prisma.attendance.findMany({
+      where: {
+        OR: [
+          { classId: class_id },
+          {
+            class: {
+              createdAt: {
+                gte: new Date(`${class_id}T00:00:00.000Z`),
+                lte: new Date(`${class_id}T23:59:59.999Z`)
+              }
+            }
+          }
+        ]
+      },
+      include: {
+        class: true,
+        student: {
+          select: { id: true, firstName: true, lastName: true, studentId: true, email: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Adaptar al formato que el dashboard espera
+    const result = attendances.map((a) => ({
+      id: a.id,
+      student_id: a.student.studentId || `${a.student.firstName} ${a.student.lastName}`,
+      class_id: a.classId,
+      class_date: a.class.createdAt.toISOString().split('T')[0],
+      timestamp: a.createdAt,
+      detection_method: 'BLE'
+    }));
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error listing attendance (legacy):', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 // GET /api/attendance?class_date=YYYY-MM-DD - Listado de asistencias por fecha (docente)
 router.get('/', authenticateToken, requireRole(['TEACHER']), async (req: AuthRequest, res) => {
   try {
@@ -487,7 +539,68 @@ router.get('/my-attendances', authenticateToken, requireRole(['STUDENT']), async
   }
 });
 
-export default router;
+// ==========================================
+// ENDPOINTS DE COMPATIBILIDAD TEMPORAL - DELETE
+// ==========================================
+
+// DELETE /api/attendance/delete-legacy/:id - Eliminar un registro SIN autenticación
+router.delete('/delete-legacy/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const attendance = await prisma.attendance.findUnique({ where: { id } });
+    if (!attendance) {
+      return res.status(404).json({ error: 'Registro no encontrado' });
+    }
+
+    await prisma.attendance.delete({ where: { id } });
+    res.json({ message: 'Registro eliminado' });
+  } catch (error) {
+    console.error('Error deleting attendance (legacy):', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// DELETE /api/attendance/delete-multiple-legacy - Eliminar varios registros SIN autenticación
+router.delete('/delete-multiple-legacy', async (req, res) => {
+  try {
+    const ids: string[] = (req.body && Array.isArray(req.body.ids)) ? req.body.ids : [];
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'ids es requerido' });
+    }
+
+    await prisma.attendance.deleteMany({ where: { id: { in: ids } } });
+    res.json({ message: `Eliminados ${ids.length} registro(s)` });
+  } catch (error) {
+    console.error('Error deleting multiple attendance (legacy):', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// DELETE /api/attendance/clear-legacy?date=YYYY-MM-DD - Limpiar registros por fecha SIN autenticación
+router.delete('/clear-legacy', async (req, res) => {
+  try {
+    const date = (req.query.date as string) || '';
+    if (!date) {
+      return res.status(400).json({ error: 'date es requerido (YYYY-MM-DD)' });
+    }
+
+    const dayStart = new Date(`${date}T00:00:00.000Z`);
+    const dayEnd = new Date(`${date}T23:59:59.999Z`);
+
+    const deleted = await prisma.attendance.deleteMany({
+      where: {
+        createdAt: { gte: dayStart, lte: dayEnd }
+      }
+    });
+
+    res.json({ message: `Eliminados ${deleted.count} registro(s)` });
+  } catch (error) {
+    console.error('Error clearing attendance (legacy):', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 // DELETE /api/attendance/delete/:id - Eliminar un registro (docente)
 router.delete('/delete/:id', authenticateToken, requireRole(['TEACHER']), async (req: AuthRequest, res) => {
   try {
@@ -551,3 +664,5 @@ router.delete('/clear', authenticateToken, requireRole(['TEACHER']), async (req:
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
+
+export default router;
