@@ -1,6 +1,6 @@
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 
-    (process.env.NODE_ENV === 'production' 
+  BASE_URL: process.env.REACT_APP_API_URL ||
+    (process.env.NODE_ENV === 'production'
       ? 'https://truthful-balance-production.up.railway.app'
       : 'http://localhost:5000'),
   ENDPOINTS: {
@@ -11,7 +11,7 @@ export const API_CONFIG = {
     },
     ATTENDANCE: {
       LIST: '/api/attendance',
-      REGISTER: '/api/attendance/register',
+      REGISTER: '/api/attendance/register-legacy',  // Endpoint de compatibilidad temporal
       CHECK: '/api/attendance/check'
     },
     STUDENTS: {
@@ -21,7 +21,7 @@ export const API_CONFIG = {
 };
 
 export const POLLING_INTERVALS = {
-  BEACON_STATUS: 5000,  
+  BEACON_STATUS: 5000,
   ATTENDANCE_LIST: 5000
 };
 

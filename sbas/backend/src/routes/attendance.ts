@@ -180,6 +180,150 @@ router.get('/', authenticateToken, requireRole(['TEACHER']), async (req: AuthReq
   }
 });
 
+// ==========================================
+// ENDPOINT DE COMPATIBILIDAD TEMPORAL
+// ==========================================
+// POST /api/attendance/register-legacy - Registrar asistencia SIN autenticación
+// Este endpoint mantiene compatibilidad con la app de estudiante actual
+// TODO: Migrar a /register con JWT cuando la app de estudiante esté actualizada
+router.post('/register-legacy', async (req, res) => {
+  try {
+    const { student_id, class_id, class_date } = req.body;
+
+    // Validación básica
+    if (!student_id || !class_id) {
+      return res.status(400).json({ error: 'student_id y class_id son requeridos' });
+    }
+
+    // Buscar o crear usuario estudiante temporal
+    let student = await prisma.user.findFirst({
+      where: { 
+        OR: [
+          { studentId: student_id },
+          { email: `${student_id.toLowerCase().replace(/\s+/g, '_')}@temp.student` }
+        ]
+      }
+    });
+
+    if (!student) {
+      // Crear estudiante temporal
+      const nameParts = student_id.split(' ');
+      const firstName = nameParts[0] || 'Estudiante';
+      const lastName = nameParts.slice(1).join(' ') || 'Temporal';
+      
+      student = await prisma.user.create({
+        data: {
+          email: `${student_id.toLowerCase().replace(/\s+/g, '_')}@temp.student`,
+          password: 'temp_password', // No se usa en este flujo
+          role: 'STUDENT',
+          firstName,
+          lastName,
+          studentId: student_id
+        }
+      });
+    }
+
+    // Buscar clase activa por class_id (que es la fecha en el sistema antiguo)
+    let activeClass = await prisma.class.findFirst({
+      where: { 
+        id: class_id,
+        isActive: true
+      }
+    });
+
+    // Si no existe, buscar por fecha (compatibilidad)
+    if (!activeClass && class_date) {
+      const dayStart = new Date(`${class_date}T00:00:00.000Z`);
+      const dayEnd = new Date(`${class_date}T23:59:59.999Z`);
+      
+      activeClass = await prisma.class.findFirst({
+        where: {
+          isActive: true,
+          createdAt: { gte: dayStart, lte: dayEnd }
+        }
+      });
+    }
+
+    // Si aún no hay clase, crear una temporal
+    if (!activeClass) {
+      // Buscar cualquier profesor para asignar la clase
+      const teacher = await prisma.user.findFirst({
+        where: { role: 'TEACHER' }
+      });
+
+      if (!teacher) {
+        return res.status(500).json({ error: 'No hay profesores disponibles en el sistema' });
+      }
+
+      activeClass = await prisma.class.create({
+        data: {
+          name: `Clase ${class_date || new Date().toISOString().split('T')[0]}`,
+          description: 'Clase creada automáticamente (sistema legacy)',
+          beaconId: 'LEGACY_BEACON',
+          isActive: true,
+          teacherId: teacher.id
+        }
+      });
+    }
+
+    // Verificar si ya registró asistencia hoy
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const existingAttendance = await prisma.attendance.findFirst({
+      where: {
+        studentId: student.id,
+        classId: activeClass.id,
+        createdAt: { gte: today }
+      }
+    });
+
+    if (existingAttendance) {
+      return res.status(400).json({ 
+        error: 'Ya registraste tu asistencia para esta clase hoy',
+        attendance: existingAttendance
+      });
+    }
+
+    // Registrar asistencia
+    const attendance = await prisma.attendance.create({
+      data: {
+        studentId: student.id,
+        classId: activeClass.id
+      },
+      include: {
+        class: {
+          select: {
+            name: true,
+            teacher: {
+              select: {
+                firstName: true,
+                lastName: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    res.status(201).json({
+      message: 'Asistencia registrada exitosamente',
+      attendance: {
+        id: attendance.id,
+        student_id: student_id,
+        class_id: activeClass.id,
+        class_name: activeClass.name,
+        timestamp: attendance.createdAt,
+        detection_method: 'LEGACY'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error registering legacy attendance:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 // POST /api/attendance/register - Registrar asistencia
 router.post('/register', authenticateToken, requireRole(['STUDENT']), async (req: AuthRequest, res) => {
   try {

@@ -5,12 +5,12 @@ import { API_CONFIG, POLLING_INTERVALS, LOCAL_STORAGE_KEYS } from "../config/api
 import { BeaconStatus, AttendanceCheckResponse, AttendanceRegisterResponse, RegisteredStudent } from "../types/attendance";
 import { handleApiError, logInfo, logError } from "../utils/errorHandler";
 
-export default function AttendanceRegister({ 
-  studentName, 
-  onAttendanceRegistered 
-}: { 
-  studentName: string, 
-  onAttendanceRegistered: () => void 
+export default function AttendanceRegister({
+  studentName,
+  onAttendanceRegistered
+}: {
+  studentName: string,
+  onAttendanceRegistered: () => void
 }) {
   const [beaconActive, setBeaconActive] = useState<boolean>(false);
   const [hasRegistered, setHasRegistered] = useState<boolean>(false);
@@ -19,7 +19,7 @@ export default function AttendanceRegister({
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'checking'>('checking');
   const [bluetoothSupported, setBluetoothSupported] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
-  
+
   // Usar refs para evitar bucles infinitos y notificaciones repetidas
   const hasInitialized = useRef<boolean>(false);
   const hasNotifiedAttendance = useRef<boolean>(false);
@@ -27,7 +27,7 @@ export default function AttendanceRegister({
   const hasNotifiedClassEnd = useRef<boolean>(false);
   const previousBeaconState = useRef<boolean | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const { showSuccess, showError, showWarning, showInfo } = useToast();
 
   useEffect(() => {
@@ -35,13 +35,13 @@ export default function AttendanceRegister({
       try {
         const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ATTENDANCE.CHECK}?student_id=${encodeURIComponent(studentName)}`;
         const res = await fetch(url);
-        
+
         if (res.ok) {
           const data: AttendanceCheckResponse = await res.json();
           if (data.hasAttendance && !hasRegistered) {
             setHasRegistered(true);
             setActiveClass(data.activeClass);
-            
+
             // Solo notificar y llamar callback UNA VEZ
             if (!hasNotifiedAttendance.current) {
               showInfo("Ya tienes asistencia registrada para esta clase", 3000);
@@ -53,7 +53,7 @@ export default function AttendanceRegister({
             setActiveClass(data.activeClass);
           }
           setConnectionStatus('connected');
-          
+
           if (!hasInitialized.current) {
             logInfo("Attendance check completed", { studentName, hasAttendance: data.hasAttendance });
           }
@@ -77,15 +77,15 @@ export default function AttendanceRegister({
       try {
         const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.BEACON.STATUS}`;
         const res = await fetch(url);
-        
+
         if (res.ok) {
           const data: BeaconStatus = await res.json();
-          
+
           // Solo notificar cambios REALES de estado y solo UNA VEZ por cambio
           if (hasInitialized.current && previousBeaconState.current !== null) {
             const wasActive = previousBeaconState.current;
             const isNowActive = data.active;
-            
+
             // Clase se inició (de false a true) y no se ha notificado
             if (!wasActive && isNowActive && !hasNotifiedClassStart.current && data.class_date) {
               showSuccess(`¡Clase iniciada! Puedes registrar tu asistencia para ${data.class_date}`, 4000);
@@ -99,13 +99,13 @@ export default function AttendanceRegister({
               hasNotifiedClassStart.current = false; // Reset para permitir notificación de inicio
             }
           }
-          
+
           // Actualizar estados
           previousBeaconState.current = data.active;
           setBeaconActive(data.active);
           setActiveClass(data.class_date);
           setConnectionStatus('connected');
-          
+
           if (!hasInitialized.current) {
             logInfo("Beacon status updated", { active: data.active, class_date: data.class_date });
           }
@@ -128,7 +128,7 @@ export default function AttendanceRegister({
       fetchBeaconStatus();
       hasInitialized.current = true;
     }
-    
+
     // Configurar polling solo para beacon status
     intervalRef.current = setInterval(() => {
       if (hasInitialized.current) {
@@ -168,7 +168,9 @@ export default function AttendanceRegister({
     try {
       const requestData = {
         student_id: studentName,
-        method: method  // Agregar esta línea
+        class_id: activeClass || new Date().toISOString().split('T')[0], // Usar fecha actual como ID si no hay clase activa
+        class_date: activeClass || new Date().toISOString().split('T')[0],
+        method: method
       };
 
       logInfo("Sending attendance registration", requestData);
@@ -184,22 +186,22 @@ export default function AttendanceRegister({
       if (res.ok) {
         const data: AttendanceRegisterResponse = await res.json();
         setHasRegistered(true);
-        
+
         // Guardar en localStorage
         const registeredStudents = JSON.parse(
           localStorage.getItem(LOCAL_STORAGE_KEYS.REGISTERED_STUDENTS) || '[]'
         );
-        const newRecord: RegisteredStudent = { 
-          studentName, 
-          classDate: data.class_date, 
-          timestamp: Date.now() 
+        const newRecord: RegisteredStudent = {
+          studentName,
+          classDate: data.class_date,
+          timestamp: Date.now()
         };
         registeredStudents.push(newRecord);
         localStorage.setItem(
-          LOCAL_STORAGE_KEYS.REGISTERED_STUDENTS, 
+          LOCAL_STORAGE_KEYS.REGISTERED_STUDENTS,
           JSON.stringify(registeredStudents)
         );
-        
+
         // Solo notificar y llamar callback una vez
         if (!hasNotifiedAttendance.current) {
           onAttendanceRegistered();
@@ -207,7 +209,7 @@ export default function AttendanceRegister({
           showSuccess(`¡Asistencia registrada exitosamente para la clase del ${data.class_date}!`, 5000);
           logInfo("Attendance registered successfully", { studentName, class_date: data.class_date });
         }
-        
+
       } else if (res.status === 409) {
         setHasRegistered(true);
         if (!hasNotifiedAttendance.current) {
@@ -234,7 +236,7 @@ export default function AttendanceRegister({
       showError("Tu dispositivo no soporta Bluetooth Web API");
       return;
     }
-    
+
     if (!beaconActive) {
       showWarning('No hay ninguna clase activa en este momento');
       return;
@@ -243,9 +245,9 @@ export default function AttendanceRegister({
     setIsScanning(true);
     try {
       showInfo("Buscando beacon de la clase...");
-      
+
       const beaconDetected = await BluetoothService.detectBeacon();
-      
+
       if (beaconDetected) {
         await handleRegister('BLE');
         showSuccess("¡Beacon detectado! Asistencia registrada automáticamente");
@@ -333,22 +335,21 @@ export default function AttendanceRegister({
           {getConnectionIndicator()}
         </div>
       </div>
-      
+
       {activeClass && (
         <div className="mb-4 text-center text-sm bg-indigo-50 border border-indigo-200 rounded-lg p-3">
           <span className="font-medium text-indigo-800">Clase activa:</span>
           <div className="font-bold text-indigo-900">{activeClass}</div>
         </div>
       )}
-      
+
       <button
         onClick={() => handleRegister('Manual')}
         disabled={!beaconActive || hasRegistered || isLoading || connectionStatus === 'disconnected'}
-        className={`w-full px-4 py-3 rounded-lg transition flex items-center justify-center font-medium ${
-          beaconActive && !hasRegistered && !isLoading && connectionStatus === 'connected'
+        className={`w-full px-4 py-3 rounded-lg transition flex items-center justify-center font-medium ${beaconActive && !hasRegistered && !isLoading && connectionStatus === 'connected'
             ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg"
             : "bg-gray-300 text-gray-500 cursor-not-allowed"
-        }`}
+          }`}
       >
         {isLoading ? (
           <>
@@ -371,7 +372,7 @@ export default function AttendanceRegister({
           </>
         )}
       </button>
-      
+
       {/* Registro por Bluetooth */}
       {bluetoothSupported && !hasRegistered && (
         <button
@@ -406,7 +407,7 @@ export default function AttendanceRegister({
       {!bluetoothSupported && (
         <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p className="text-sm text-yellow-700">
-            ℹ️ Tu navegador no soporta detección automática por Bluetooth. 
+            ℹ️ Tu navegador no soporta detección automática por Bluetooth.
             Usa el registro manual.
           </p>
         </div>
