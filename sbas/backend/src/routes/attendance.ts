@@ -333,6 +333,13 @@ router.get('/check-legacy', async (req, res) => {
       return res.status(400).json({ error: 'student_id es requerido' });
     }
 
+    // Buscar clase activa PRIMERO (siempre devolver esta info)
+    const activeClass = await prisma.class.findFirst({
+      where: { isActive: true }
+    });
+
+    const classDate = activeClass ? activeClass.createdAt.toISOString().split('T')[0] : null;
+
     // Buscar usuario por student_id
     const student = await prisma.user.findFirst({
       where: {
@@ -343,23 +350,11 @@ router.get('/check-legacy', async (req, res) => {
       }
     });
 
-    if (!student) {
-      // Si no existe el estudiante, no tiene asistencia
+    // Si no existe el estudiante o no hay clase activa, no tiene asistencia
+    if (!student || !activeClass) {
       return res.json({
         hasAttendance: false,
-        activeClass: null
-      });
-    }
-
-    // Buscar clase activa
-    const activeClass = await prisma.class.findFirst({
-      where: { isActive: true }
-    });
-
-    if (!activeClass) {
-      return res.json({
-        hasAttendance: false,
-        activeClass: null
+        activeClass: classDate
       });
     }
 
@@ -374,8 +369,6 @@ router.get('/check-legacy', async (req, res) => {
         createdAt: { gte: today }
       }
     });
-
-    const classDate = activeClass.createdAt.toISOString().split('T')[0];
 
     res.json({
       hasAttendance: !!attendance,
