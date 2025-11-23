@@ -38,7 +38,7 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:3001
 BEACON_UUID=E2C56DB5-DFFB-48D2-B060-D0F5A71096E0
 BEACON_MAJOR=1
 BEACON_MINOR=1
-DATABASE_URL=./data/database.json
+DATABASE_URL=postgresql://sbas_user:sbas_password_dev@localhost:5432/sbas_db?schema=public
 JWT_SECRET=dev_jwt_secret_change_in_production
 ADMIN_PASSWORD=admin123"
 
