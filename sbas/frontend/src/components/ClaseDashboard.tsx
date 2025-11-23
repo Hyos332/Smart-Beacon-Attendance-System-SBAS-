@@ -29,13 +29,13 @@ export default function ClaseDashboard({ date, className, onBack }: { date: stri
 
   const fetchAttendance = useCallback(async () => {
     try {
-      // ✅ USAR configuración de API
-    // Usar class_id como date (date es el identificador único de la clase)
+      
+    
     const url = `${API_CONFIG.ENDPOINTS.ATTENDANCE.LIST}?class_id=${date}`;
     const data = await apiFetch<Attendance[]>(url);
         console.log(`[FRONTEND] Loaded ${data.length} records for class ${date}:`, data);
         
-        // Filtrar registros únicos por student_id SOLO de la clase actual
+        
         const uniqueAttendanceMap = new Map<string, Attendance>();
         data.forEach((record: Attendance) => {
           if (record.class_id === date) {
@@ -67,23 +67,23 @@ export default function ClaseDashboard({ date, className, onBack }: { date: stri
       setBeaconActive(!!data.active);
       setStatus(data.active ? 'Clase activa - Registrando asistencia' : 'Clase inactiva');
     } catch (error) {
-      // Si falla auth u otra causa, considerar clase inactiva y quitar loading
+      
       setBeaconActive(false);
       setIsLoading(false);
       console.error('Error fetching beacon status:', error);
     }
   }, []);
 
-  // ✅ FIX - Polling de asistencia con cleanup y tipos
+  
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     
     if (beaconActive) {
       setIsLoading(true);
-      fetchAttendance(); // Primera llamada inmediata
-      interval = setInterval(fetchAttendance, 5000); // Cada 5 segundos
+      fetchAttendance(); 
+      interval = setInterval(fetchAttendance, 5000); 
     } else {
-      // Si no hay clase activa, no debemos mostrar spinner eterno
+      
       setIsLoading(false);
     }
     
@@ -98,16 +98,16 @@ export default function ClaseDashboard({ date, className, onBack }: { date: stri
     let interval: NodeJS.Timeout | null = null;
     
     const startPolling = () => {
-      fetchBeaconStatus(); // Primera llamada
-      interval = setInterval(fetchBeaconStatus, 5000); // Cada 5 segundos (en lugar de 3)
+      fetchBeaconStatus(); 
+      interval = setInterval(fetchBeaconStatus, 5000); 
     };
     
-    // Solo hacer polling cuando es necesario
+    
     if (document.visibilityState === 'visible') {
       startPolling();
     }
     
-    // Pausar polling cuando la tab no está visible
+    
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         startPolling();
@@ -159,7 +159,7 @@ export default function ClaseDashboard({ date, className, onBack }: { date: stri
     }
   };
 
-  // FUNCIONES DE LIMPIEZA ACTUALIZADAS
+  
   const deleteSelectedRequest = async () => {
     setIsDeleting(true);
     try {
